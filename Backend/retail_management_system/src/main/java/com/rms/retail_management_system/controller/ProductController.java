@@ -24,7 +24,15 @@ public class ProductController {
 
     private final ProductService productService;
 
-    // GET ALL PRODUCTS
+    /**
+     * GET ALL PRODUCTS
+     * @param wholesalerId
+     * @param page
+     * @param size
+     * @param sortBy
+     * @param sortDir
+     * @return
+     */
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllProducts(
             @PathVariable Long wholesalerId,
@@ -49,14 +57,25 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    // GET CATEGORIES
+    /**
+     * GET CATEGORIES
+     * @param wholesalerId
+     * @return
+     */
     @GetMapping("/categories")
     public ResponseEntity<List<String>> getAllCategories(@PathVariable Long wholesalerId) {
         List<String> categories = productService.getAllCategories(wholesalerId);
         return ResponseEntity.ok(categories);
     }
 
-    // GET PRODUCTS BY CATEGORY
+    /**
+     * GET PRODUCTS BY CATEGORY
+     * @param wholesalerId
+     * @param category
+     * @param page
+     * @param size
+     * @return
+     */
     @GetMapping("/category/{category}")
     public ResponseEntity<Page<ProductDTO>> getProductsByCategory(
             @PathVariable Long wholesalerId,
@@ -69,7 +88,14 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    // SEARCH PRODUCTS
+    /**
+     * SEARCH PRODUCTS
+     * @param wholesalerId
+     * @param query
+     * @param page
+     * @param size
+     * @return
+     */
     @GetMapping("/search")
     public ResponseEntity<Page<ProductDTO>> searchProducts(
             @PathVariable Long wholesalerId,
@@ -82,7 +108,12 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    // CREATE PRODUCT
+    /**
+     * CREATE PRODUCT
+     * @param wholesalerId
+     * @param productRequestDTO
+     * @return
+     */
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(
             @PathVariable Long wholesalerId,
@@ -94,7 +125,12 @@ public class ProductController {
         return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
     }
 
-    // GET SINGLE PRODUCT (now needs productId only)
+    /**
+     * GET SINGLE PRODUCT BY ID
+     * @param wholesalerId
+     * @param productId
+     * @return
+     */
     @GetMapping("/{productId}")
     public ResponseEntity<ProductDTO> getProductById(
             @PathVariable Long wholesalerId,
@@ -104,7 +140,13 @@ public class ProductController {
         return ResponseEntity.ok(product);
     }
 
-    // UPDATE PRODUCT
+    /**
+     * UPDATE PRODUCT
+     * @param wholesalerId
+     * @param productId
+     * @param productRequestDTO
+     * @return
+     */
     @PutMapping("/{productId}")
     public ResponseEntity<ProductDTO> updateProduct(
             @PathVariable Long wholesalerId,
@@ -116,7 +158,12 @@ public class ProductController {
         return ResponseEntity.ok(updatedProduct);
     }
 
-    // DELETE PRODUCT
+    /**
+     * DELETE PRODUCT
+     * @param wholesalerId
+     * @param productId
+     * @return
+     */
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable Long wholesalerId,
@@ -126,7 +173,13 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    // TOGGLE STATUS
+    /**
+     * TOGGLE STATUS
+     * @param wholesalerId
+     * @param productId
+     * @param status
+     * @return
+     */
     @PatchMapping("/{productId}/status")
     public ResponseEntity<ProductDTO> toggleProductStatus(
             @PathVariable Long wholesalerId,

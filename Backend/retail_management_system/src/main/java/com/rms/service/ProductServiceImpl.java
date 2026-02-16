@@ -1,15 +1,20 @@
-package com.rms.retail_management_system.service;
+package com.rms.service;
 
-import com.rms.retail_management_system.dto.ProductDTO;
-import com.rms.retail_management_system.dto.ProductRequestDTO;
-import com.rms.retail_management_system.exception.ResourceNotFoundException;
-import com.rms.retail_management_system.model.Product;
-import com.rms.retail_management_system.model.User;
-import com.rms.retail_management_system.repository.ProductRepository;
-import com.rms.retail_management_system.repository.UserRepository;
+import com.rms.dto.ProductDTO;
+import com.rms.dto.ProductRequestDTO;
+import com.rms.exception.ResourceNotFoundException;
+import com.rms.model.Product;
+import com.rms.model.Role;
+import com.rms.model.User;
+import com.rms.model.Wholesaler;
+import com.rms.repository.ProductRepository;
+import com.rms.repository.UserRepository;
+import com.rms.repository.WholesalerRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,38 +28,48 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    @Autowired
+    private final WholesalerRepository wholesalerRepository;
+    @Autowired
+    private ModelMapper modelMapper;
 
+    /**
+     * creating product after checking basic edge case
+     * @param productRequestDTO
+     * @return
+     */
     @Override
     @Transactional
     public ProductDTO createProduct(ProductRequestDTO productRequestDTO) {
         log.info("Creating new product: {}", productRequestDTO.getName());
 
-        // Validate required fields
+        // validate required fields
         if (productRequestDTO.getWholesalerId() == null) {
             throw new IllegalArgumentException("Wholesaler ID is required");
         }
 
-        // Validate wholesaler exists AND is actually a wholesaler
-        User wholesaler = userRepository.findById(productRequestDTO.getWholesalerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Wholesaler not found with id: " + productRequestDTO.getWholesalerId()));
+        // validate wholesaler exists AND is actually a wholesaler
+        Wholesaler wholesaler = wholesalerRepository.findById(productRequestDTO.getWholesalerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Wholesaler", "id", productRequestDTO.getWholesalerId()));
 
-        // Check if user is actually a wholesaler
-        if (wholesaler.getRole() != User.Role.WHOLESALER) {
-            throw new IllegalArgumentException("User with ID " + productRequestDTO.getWholesalerId() + " is not a wholesaler");
+        // check if user is actually a wholesaler
+        if (wholesaler.getUser().getRole() != Role.WHOLESALER) {
+            //throw new IllegalArgumentException("User with ID " + productRequestDTO.getWholesalerId() + " is not a wholesaler");
+            throw new IllegalArgumentException("User with ID " + wholesaler.getUser().getId() + " is not a wholesaler");
         }
 
-        // Check if wholesaler is active
-        if (!wholesaler.getIsActive()) {
+        // check if wholesaler is active
+        if (!wholesaler.getUser().getIsActive()) {
             throw new IllegalArgumentException("Wholesaler account is inactive");
         }
 
-        // Check if SKU already exists
+        // check if SKU already exists
         if (productRequestDTO.getSkuCode() != null &&
                 productRepository.existsBySkuCode(productRequestDTO.getSkuCode())) {
             throw new IllegalArgumentException("SKU code already exists: " + productRequestDTO.getSkuCode());
         }
 
-        // Create new product
+        // create new product
         Product product = new Product();
         mapRequestToEntity(productRequestDTO, product);
         product.setWholesaler(wholesaler);
@@ -65,6 +80,13 @@ public class ProductServiceImpl implements ProductService {
         return mapEntityToDTO(savedProduct);
     }
 
+
+    /**
+     * update product
+     * @param id
+     * @param productRequestDTO
+     * @return
+     */
     @Override
     @Transactional
     public ProductDTO updateProduct(Long id, ProductRequestDTO productRequestDTO) {
@@ -72,7 +94,7 @@ public class ProductServiceImpl implements ProductService {
 
         // Find existing product
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
         // Check if SKU is being changed and already exists
         if (productRequestDTO.getSkuCode() != null &&
@@ -92,14 +114,27 @@ public class ProductServiceImpl implements ProductService {
         return mapEntityToDTO(updatedProduct);
     }
 
+
+    /**
+     * fetch product by its id
+     * @param id
+     * @return
+     */
     @Override
     public ProductDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
         return mapEntityToDTO(product);
     }
 
+
+    /**
+     * fetch all the products
+     * @param wholesalerId
+     * @param pageable
+     * @return
+     */
     @Override
     public Page<ProductDTO> getAllProducts(Long wholesalerId, Pageable pageable) {
         // Using the derived query method
@@ -107,6 +142,14 @@ public class ProductServiceImpl implements ProductService {
         return products.map(this::mapEntityToDTO);
     }
 
+
+    /**
+     * fetch products have given category
+     * @param wholesalerId
+     * @param category
+     * @param pageable
+     * @return
+     */
     @Override
     public Page<ProductDTO> getProductsByCategory(Long wholesalerId, String category, Pageable pageable) {
         // Using the derived query method
@@ -114,6 +157,14 @@ public class ProductServiceImpl implements ProductService {
         return products.map(this::mapEntityToDTO);
     }
 
+
+    /**
+     * search product using custom query
+     * @param wholesalerId
+     * @param searchTerm
+     * @param pageable
+     * @return
+     */
     // The searchProducts method remains the same
     @Override
     public Page<ProductDTO> searchProducts(Long wholesalerId, String searchTerm, Pageable pageable) {
@@ -121,11 +172,16 @@ public class ProductServiceImpl implements ProductService {
         return products.map(this::mapEntityToDTO);
     }
 
+
+    /**
+     * delete product by id
+     * @param id
+     */
     @Override
     @Transactional
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
         // Soft delete (set isActive to false)
         product.setIsActive(false);
@@ -134,16 +190,29 @@ public class ProductServiceImpl implements ProductService {
         log.info("Product soft-deleted: {}", id);
     }
 
+
+    /**
+     * get all the categories
+     * @param wholesalerId
+     * @return
+     */
     @Override
     public List<String> getAllCategories(Long wholesalerId) {
         return productRepository.findDistinctCategoriesByWholesalerId(wholesalerId);
     }
 
+
+    /**
+     * toggling product status (active->deactivate/deactivate->activate)
+     * @param id
+     * @param status
+     * @return
+     */
     @Override
     @Transactional
     public ProductDTO toggleProductStatus(Long id, Boolean status) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
         product.setIsActive(status);
         Product updatedProduct = productRepository.save(product);
@@ -152,33 +221,28 @@ public class ProductServiceImpl implements ProductService {
         return mapEntityToDTO(updatedProduct);
     }
 
-    // Helper methods for mapping
+    /**
+     * custom implimentation of model mapper
+     * map entity object to dto object
+     * @param product
+     * @return
+     */
     private ProductDTO mapEntityToDTO(Product product) {
-        ProductDTO dto = new ProductDTO();
-        dto.setId(product.getId());
-        dto.setName(product.getName());
-        dto.setDescription(product.getDescription());
-        dto.setCategory(product.getCategory());
-        dto.setPrice(product.getPrice());
-        dto.setStockQuantity(product.getStockQuantity());
+        ProductDTO dto = modelMapper.map(product, ProductDTO.class);
+
         dto.setWholesalerId(product.getWholesaler().getId());
         dto.setWholesalerName(product.getWholesaler().getBusinessName());
-        dto.setSkuCode(product.getSkuCode());
-        dto.setUnit(product.getUnit());
-        dto.setImageUrl(product.getImageUrl());
-        dto.setIsActive(product.getIsActive());
 
         return dto;
     }
 
+    /**
+     * custom implimentation of model mapper
+     * map dto object to entity object
+     * @param requestDTO
+     * @param product
+     */
     private void mapRequestToEntity(ProductRequestDTO requestDTO, Product product) {
-        product.setName(requestDTO.getName());
-        product.setDescription(requestDTO.getDescription());
-        product.setCategory(requestDTO.getCategory());
-        product.setPrice(requestDTO.getPrice());
-        product.setStockQuantity(requestDTO.getStockQuantity());
-        product.setSkuCode(requestDTO.getSkuCode());
-        product.setUnit(requestDTO.getUnit());
-        product.setImageUrl(requestDTO.getImageUrl());
+        modelMapper.map(requestDTO, product);
     }
 }

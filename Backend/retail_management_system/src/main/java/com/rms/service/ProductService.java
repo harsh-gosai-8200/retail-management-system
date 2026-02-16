@@ -1,7 +1,7 @@
-package com.rms.retail_management_system.service;
+package com.rms.service;
 
-import com.rms.retail_management_system.dto.ProductDTO;
-import com.rms.retail_management_system.dto.ProductRequestDTO;
+import com.rms.dto.ProductDTO;
+import com.rms.dto.ProductRequestDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

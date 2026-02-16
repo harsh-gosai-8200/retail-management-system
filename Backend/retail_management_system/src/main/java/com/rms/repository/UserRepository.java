@@ -1,6 +1,6 @@
-package com.rms.retail_management_system.repository;
+package com.rms.repository;
 
-import com.rms.retail_management_system.model.User;
+import com.rms.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,6 +17,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Boolean existsByUsername(String username);
 
-    // Find users by role (for future use)
-    // List<User> findByRole(User.Role role);
+    //....
 }

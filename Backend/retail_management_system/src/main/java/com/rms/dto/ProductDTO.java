@@ -1,19 +1,22 @@
-package com.rms.retail_management_system.dto;
+package com.rms.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class ProductRequestDTO {
+public class ProductDTO {
+
+    private Long id;
 
     @NotBlank(message = "Product name is required")
-    @Size(max = 255, message = "Product name must be less than 255 characters")
     private String name;
 
     private String description;
 
-    @Size(max = 100)
     private String category;
 
     @NotNull(message = "Price is required")
@@ -21,15 +24,14 @@ public class ProductRequestDTO {
     private BigDecimal price;
 
     @Min(value = 0, message = "Stock quantity cannot be negative")
-    private Integer stockQuantity = 0;
+    private Integer stockQuantity;
 
-    @NotNull(message = "Wholesaler ID is required")
     private Long wholesalerId;
+    private String wholesalerName;
 
     private String skuCode;
-
-    @Size(max = 20)
-    private String unit = "piece";
+    private String unit;
 
     private String imageUrl;
+    private Boolean isActive;
 }

@@ -1,8 +1,12 @@
-package com.rms.retail_management_system.model;
+package com.rms.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -37,7 +41,7 @@ public class Product {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wholesaler_id", nullable = false)
-    private User wholesaler;
+    private Wholesaler wholesaler;
 
     @Column(unique = true)
     private String skuCode;
@@ -50,22 +54,10 @@ public class Product {
     @Column(nullable = false)
     private Boolean isActive = true;
 
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-
-        // Generate SKU if not provided
-        if (skuCode == null || skuCode.isEmpty()) {
-            skuCode = "PRD-" + System.currentTimeMillis() % 10000;
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

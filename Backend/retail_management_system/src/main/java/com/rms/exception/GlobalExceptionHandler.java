@@ -1,4 +1,4 @@
-package com.rms.retail_management_system.exception;
+package com.rms.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

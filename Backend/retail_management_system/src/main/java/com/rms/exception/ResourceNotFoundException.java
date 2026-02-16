@@ -1,4 +1,4 @@
-package com.rms.retail_management_system.exception;
+package com.rms.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
 

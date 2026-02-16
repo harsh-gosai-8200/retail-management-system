@@ -1,8 +1,8 @@
-package com.rms.retail_management_system.controller;
+package com.rms.controller;
 
-import com.rms.retail_management_system.dto.ProductDTO;
-import com.rms.retail_management_system.dto.ProductRequestDTO;
-import com.rms.retail_management_system.service.ProductService;
+import com.rms.dto.ProductDTO;
+import com.rms.dto.ProductRequestDTO;
+import com.rms.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -160,13 +160,11 @@ public class ProductController {
 
     /**
      * DELETE PRODUCT
-     * @param wholesalerId
      * @param productId
      * @return
      */
     @DeleteMapping("/{productId}")
     public ResponseEntity<Void> deleteProduct(
-            @PathVariable Long wholesalerId,
             @PathVariable Long productId) {
 
         productService.deleteProduct(productId);
@@ -175,14 +173,12 @@ public class ProductController {
 
     /**
      * TOGGLE STATUS
-     * @param wholesalerId
      * @param productId
      * @param status
      * @return
      */
     @PatchMapping("/{productId}/status")
     public ResponseEntity<ProductDTO> toggleProductStatus(
-            @PathVariable Long wholesalerId,
             @PathVariable Long productId,
             @RequestParam Boolean status) {
 

@@ -70,8 +70,9 @@ import {
 } from "~/components/ui/alert-dialog";
 
 import { cn } from "~/lib/utils";
-import { api, type Product } from "~/services/api";
+import { api, type Product, type SpringPage } from "~/services/api";
 import { productSchema, type ProductFormData } from "~/lib/schemas/wholesaler";
+import { useAuth } from "~/context/AuthContext";
 
 
 // Loader to fetch products with pagination, search, and filtering
@@ -82,59 +83,67 @@ export async function loader({ request }: { request: Request }) {
   const search = url.searchParams.get("search") || "";
   const category = url.searchParams.get("category") || "all";
 
-  // Default wholesaler ID (should come from auth context in real app)
-  const wholesalerId = 1;
+  // Get wholesaler ID from localStorage if available (client-side)
+  let wholesalerId = 1;
+  if (typeof window !== "undefined") {
+    const storedId = localStorage.getItem("user_id");
+    if (storedId) {
+      wholesalerId = parseInt(storedId);
+    }
+  }
 
   try {
+
     let products: Product[] = [];
     let pagination = {
       totalItems: 0,
       totalPages: 0,
       currentPage: 0,
     };
+
+    // All API methods now return SpringPage<Product>
+    let response: SpringPage<Product>;
+
     if (search) {
-      const response = await api.searchProducts(wholesalerId, search, page, size);
-      products = response.content;
-      pagination = {
-        totalItems: response.totalElements,
-        totalPages: response.totalPages,
-        currentPage: response.number,
-      };
+      response = await api.searchProducts(wholesalerId, search, page, size);
     } else if (category && category !== "all") {
-      const response = await api.getProductsByCategory(wholesalerId, category, page, size);
-      products = response.content;
-      pagination = {
-        totalItems: response.totalElements,
-        totalPages: response.totalPages,
-        currentPage: response.number,
-      };
+      response = await api.getProductsByCategory(wholesalerId, category, page, size);
     } else {
-      const response = await api.getProducts(wholesalerId, page, size);
-      products = response.products || [];
-      pagination = {
-        totalItems: response.totalItems,
-        totalPages: response.totalPages,
-        currentPage: response.currentPage,
-      };
+      // Default fetch
+      response = await api.getProducts(wholesalerId, page, size);
+      console.log(response);
     }
 
-    const categories = await api.getCategories(wholesalerId);
-    return { products, categories, pagination, error: null };
+    // Map SpringPage to component state
+    products = response.content || [];
+    pagination = {
+      totalItems: response.totalElements,
+      totalPages: response.totalPages,
+      currentPage: response.number,
+    };
+
+    const categories = ["All", "Electronics", "Clothing", "Groceries", "Home & Kitchen", "Beauty & Personal Care", "Sports & Fitness", "Toys & Games", "Books", "Automotive"];
+    return { products, categories, pagination, error: null, wholesalerId };
   } catch (error) {
     console.error("Failed to fetch products:", error);
     return {
       products: [],
-      categories: [],
+      categories: ["All", "Electronics", "Clothing", "Groceries", "Home & Kitchen", "Beauty & Personal Care", "Sports & Fitness", "Toys & Games", "Books", "Automotive"],
       pagination: { totalItems: 0, totalPages: 0, currentPage: 0 },
-      error: "Failed to load products. Please check the backend connection."
+      error: "Failed to load products. Please check the backend connection.",
+      wholesalerId
     };
   }
 }
 
 export default function ProductsPage() {
-  const { products: initialProducts, categories, pagination, error } = useLoaderData<typeof loader>();
+  const { products: initialProducts, categories, pagination, error, wholesalerId: loaderWholesalerId } = useLoaderData<typeof loader>();
   const revalidator = useRevalidator();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Use user from context if available, otherwise fallback to loader data
+  const { user } = useAuth();
+  const wholesalerId = user?.id || loaderWholesalerId || 1;
 
   const [products, setProducts] = useState<Product[]>(Array.isArray(initialProducts) ? initialProducts : []);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -220,7 +229,7 @@ export default function ProductsPage() {
       stockQuantity: 0,
       unit: "piece",
       skuCode: "",
-      wholesalerId: 1, // Default wholesaler ID
+      wholesalerId: wholesalerId, // Dynamic wholesaler ID
       imageUrl: "",
       isActive: true,
     },
@@ -242,7 +251,7 @@ export default function ProductsPage() {
       stockQuantity: 0,
       unit: "piece",
       skuCode: `SKU-${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`, // Auto-generate SKU
-      wholesalerId: 1,
+      wholesalerId: wholesalerId,
       imageUrl: "",
       isActive: true,
     });
@@ -273,13 +282,14 @@ export default function ProductsPage() {
   };
 
   const onSubmit = async (data: ProductFormData) => {
+    console.log(wholesalerId)
     setIsSubmitting(true);
     try {
       if (editingProduct && editingProduct.id) {
-        await api.updateProduct(1, editingProduct.id, data);
+        await api.updateProduct(wholesalerId, editingProduct.id, data);
         toast.success("Product updated successfully");
       } else {
-        await api.createProduct(1, data);
+        await api.createProduct(wholesalerId, data);
         toast.success("Product created successfully");
       }
       setIsDialogOpen(false);
@@ -295,7 +305,7 @@ export default function ProductsPage() {
   const handleDelete = async () => {
     if (!productToDelete?.id) return;
     try {
-      await api.deleteProduct(1, productToDelete.id);
+      await api.deleteProduct(wholesalerId, productToDelete.id);
       toast.success("Product deleted successfully");
       setIsDeleteDialogOpen(false);
       revalidator.revalidate();
@@ -308,7 +318,7 @@ export default function ProductsPage() {
   const handleToggleStatus = async (product: Product) => {
     if (!product.id) return;
     try {
-      await api.toggleProductStatus(1, product.id, !product.isActive);
+      await api.toggleProductStatus(wholesalerId, product.id, !product.isActive);
       toast.success(`Product ${product.isActive ? "deactivated" : "activated"}`);
       revalidator.revalidate();
     } catch (err) {

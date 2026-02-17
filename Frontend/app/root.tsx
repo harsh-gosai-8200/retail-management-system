@@ -34,7 +34,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Toaster />
         <ScrollRestoration />
         <Scripts />
@@ -42,6 +44,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     </html>
   );
 }
+
+import { AuthProvider } from "./context/AuthContext";
 
 export default function App() {
   return <Outlet />;

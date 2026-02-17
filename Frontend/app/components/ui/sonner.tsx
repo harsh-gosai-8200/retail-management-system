@@ -7,11 +7,11 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { Toaster as Sonner, type ToasterProps } from "sonner";
+import { Toaster as SonnerToaster } from "sonner";
 
-const Toaster = ({ ...props }: ToasterProps) => {
+const Toaster = ({ ...props }: React.ComponentProps<typeof SonnerToaster>) => {
   return (
-    <Sonner
+    <SonnerToaster
       theme="light"
       className="toaster group"
       icons={{

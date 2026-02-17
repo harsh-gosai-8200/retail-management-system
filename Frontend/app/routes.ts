@@ -7,8 +7,12 @@ import {
 
 export default [
   // index("routes/home.tsx"),
+  layout("routes/auth/layout.tsx", [
+    route("auth/login", "routes/auth/login.tsx"),
+    route("auth/register", "routes/auth/register.tsx"),
+  ]),
   layout("routes/wholesaler.tsx", [
-    // route("wholesaler", "routes/wholesaler/index.tsx"),
+    route("wholesaler", "routes/wholesaler/dashboard.tsx"),
     route("wholesaler/products", "routes/wholesaler/products.tsx"),
     // route("wholesaler/orders", "routes/wholesaler/orders.tsx"),
     // route("wholesaler/payments", "routes/wholesaler/payments.tsx"),

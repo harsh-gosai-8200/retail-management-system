@@ -76,6 +76,11 @@ public class ProductServiceImpl implements ProductService {
         // create new product
         Product product = new Product();
         mapRequestToEntity(productRequestDTO, product);
+
+        //
+//        product.setId(null);
+//        product.setVersion(null);
+        //
         product.setWholesaler(wholesaler);
 
         Product savedProduct = productRepository.save(product);
@@ -112,6 +117,7 @@ public class ProductServiceImpl implements ProductService {
         // Update product fields
         mapRequestToEntity(productRequestDTO, product);
 
+//        Product updatedProduct = productRepository.save(product);
         Product updatedProduct = productRepository.save(product);
         log.info("Product updated successfully: {}", id);
 
@@ -175,9 +181,10 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
-        // Soft delete (set isActive to false)
-        product.setIsActive(false);
-        productRepository.save(product);
+//        // Soft delete (set isActive to false)
+//        product.setIsActive(false);
+        productRepository.delete(product);
+//        productRepository.save(product);
 
         log.info("Product soft-deleted: {}", id);
     }
@@ -244,7 +251,16 @@ public class ProductServiceImpl implements ProductService {
      * @param requestDTO
      * @param product
      */
+//    private void mapRequestToEntity(ProductRequestDTO requestDTO, Product product) {
+//        modelMapper.map(requestDTO, product);
+//    }
     private void mapRequestToEntity(ProductRequestDTO requestDTO, Product product) {
+        modelMapper.typeMap(ProductRequestDTO.class, Product.class)
+                .addMappings(mapper -> {
+                    mapper.skip(Product::setId);
+                    mapper.skip(Product::setVersion);
+                });
+
         modelMapper.map(requestDTO, product);
     }
 }

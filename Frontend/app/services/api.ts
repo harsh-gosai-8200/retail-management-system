@@ -1,9 +1,36 @@
-
+import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
 
 const BASE_URL = "http://localhost:8080/api";
 
+export interface LoginRequest {
+    email: string;
+    password: string;
+}
+
+export interface LoginResponse {
+    token: string;
+    role: string;
+    userId: number;
+    username: string;
+}
+
+export interface RegisterRequest {
+    username: string;
+    email: string;
+    password: string;
+    phone: string;
+    role: string;
+    businessName?: string;
+    address?: string;
+    gstNumber?: string;
+    shopName?: string;
+    latitude?: number;
+    longitude?: number;
+}
+
 export interface Product {
-    id: number;
+    id?: number;
+    version?: number; 
     name: string;
     description: string;
     price: number;
@@ -14,9 +41,10 @@ export interface Product {
     wholesalerId: number;
     wholesalerName?: string;
     imageUrl: string | null;
-    isActive: boolean;
+    active: boolean;
 }
 
+// PaginatedResponse is deprecated, use SpringPage
 export interface PaginatedResponse<T> {
     products: T[];
     totalItems: number;
@@ -34,86 +62,212 @@ export interface SpringPage<T> {
 }
 
 class ApiService {
-    private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-        const response = await fetch(`${BASE_URL}${endpoint}`, {
-            ...options,
+    private axiosInstance: AxiosInstance;
+
+    constructor() {
+        this.axiosInstance = axios.create({
+            baseURL: BASE_URL,
             headers: {
                 "Content-Type": "application/json",
-                ...options.headers,
+                "ngrok-skip-browser-warning": "true",
             },
         });
 
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.statusText}`);
-        }
+        // 🔥 ADD THIS REQUEST INTERCEPTOR
+    this.axiosInstance.interceptors.request.use((config) => {
 
-        // Handle empty responses (e.g. DELETE)
-        if (response.status === 204) {
-            return {} as unknown as T;
+        if (typeof window !== "undefined") {
+        const token = localStorage.getItem("jwt_token");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
+    }
+    return config;
+        // const token = localStorage.getItem("jwt_token");
 
-        // Check if there is content to parse
-        const text = await response.text();
-        return text ? JSON.parse(text) : ({} as unknown as T);
+        // if (token) {
+        //     config.headers.Authorization = `Bearer ${token}`;
+        // }
+
+        // return config;
+    });
+
+        // Interceptor to handle responses and errors
+        this.axiosInstance.interceptors.response.use(
+            (response) => {
+                // If the response is 204 No Content, return empty object
+                if (response.status === 204) {
+                    return {} as any;
+                }
+                return response.data;
+            },
+            (error) => {
+                const message = error.response?.data?.message || error.message || "API Error";
+                throw new Error(message);
+            }
+        );
+    }
+
+    private async request<T>(endpoint: string, config: AxiosRequestConfig = {}): Promise<T> {
+        try {
+            return await this.axiosInstance.request<any, T>({
+                url: endpoint,
+                ...config,
+            });
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    // Auth
+    async login(credentials: LoginRequest): Promise<LoginResponse> {
+        return this.request<LoginResponse>("/auth/login", {
+            method: "POST",
+            data: credentials,
+        });
+        
+    }
+
+    async register(data: RegisterRequest): Promise<void> {
+        return this.request<void>("/auth/register", {
+            method: "POST",
+            data: data,
+        });
     }
 
     // Products
     async getProducts(
-        wholesalerId: number = 1,
+        wholesalerId: number,
         page: number = 0,
         size: number = 10,
         sortBy: string = "name",
         sortDir: string = "asc"
-    ): Promise<PaginatedResponse<Product>> {
-        return this.request<PaginatedResponse<Product>>(
-            `/wholesalers/${wholesalerId}/products?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
-        );
+    ): Promise<SpringPage<Product>> {
+        const res = await this.request<any>(
+    `/products`,
+    { params: { wholesalerId, page, size, sort: `${sortBy},${sortDir}` } }
+  );
+
+  return {
+    content: res.products || [],
+    totalPages: res.totalPages,
+    totalElements: res.totalItems,
+    size: res.pageSize,
+    number: res.currentPage,
+    empty: !res.products || res.products.length === 0,
+  };
+        // return this.request<SpringPage<Product>>(
+        //     `/products`, {
+        //     params: {
+        //         wholesalerId,
+        //         page,
+        //         size,
+        //         sort: `${sortBy},${sortDir}`
+        //     }
+        // });
     }
 
     async getProduct(wholesalerId: number, productId: number): Promise<Product> {
-        return this.request<Product>(`/wholesalers/${wholesalerId}/products/${productId}`);
+        return this.request<Product>(`/products/${productId}`);
     }
 
     async createProduct(wholesalerId: number, data: Partial<Product>): Promise<Product> {
-        return this.request<Product>(`/wholesalers/${wholesalerId}/products`, {
+         const { id, version, ...payload } = data;
+        
+        return this.request<Product>(`/products`, {
             method: "POST",
-            body: JSON.stringify(data),
+            data: payload,
+            params: { wholesalerId }
         });
     }
 
     async updateProduct(wholesalerId: number, productId: number, data: Partial<Product>): Promise<Product> {
-        return this.request<Product>(`/wholesalers/${wholesalerId}/products/${productId}`, {
+        return this.request<Product>(`/products/${productId}`, {
             method: "PUT",
-            body: JSON.stringify(data),
-        });
+            data: data,
+            params: { wholesalerId }
+        });         
     }
 
     async deleteProduct(wholesalerId: number, productId: number): Promise<{ message: string }> {
-        return this.request<{ message: string }>(`/wholesalers/${wholesalerId}/products/${productId}`, {
+        return this.request<{ message: string }>(`/products/${productId}`, {
             method: "DELETE",
+            // No wholesalerId required for delete based on postman collection, but good to check if backend enforces it.
+            // keeping it simple as per collection item 15
         });
     }
 
     async searchProducts(wholesalerId: number, keyword: string, page: number = 0, size: number = 10): Promise<SpringPage<Product>> {
-        return this.request<SpringPage<Product>>(
-            `/wholesalers/${wholesalerId}/products/search?query=${encodeURIComponent(keyword)}&page=${page}&size=${size}`
-        );
+        const res = await this.request<any>(`/products`, {
+        params: {
+            wholesalerId,
+            search: keyword,
+            page,
+            size
+        }
+    });
+
+    return {
+        content: res.products || [],
+        totalPages: res.totalPages,
+        totalElements: res.totalItems,
+        size: res.pageSize,
+        number: res.currentPage,
+        empty: !res.products || res.products.length === 0,
+    };
+        
+        // return this.request<SpringPage<Product>>(
+        //     `/products`, {
+        //     params: {
+        //         wholesalerId,
+        //         search: keyword,
+        //         page,
+        //         size
+        //     }
+        // });
     }
 
     async getProductsByCategory(wholesalerId: number, category: string, page: number = 0, size: number = 10): Promise<SpringPage<Product>> {
-        return this.request<SpringPage<Product>>(
-            `/wholesalers/${wholesalerId}/products/category/${encodeURIComponent(category)}?page=${page}&size=${size}`
-        );
+        const res = await this.request<any>(`/products`, {
+        params: {
+            wholesalerId,
+            category,
+            page,
+            size,
+        }
+    });
+
+    return {
+        content: res.products || [],
+        totalPages: res.totalPages,
+        totalElements: res.totalItems,
+        size: res.pageSize,
+        number: res.currentPage,
+        empty: !res.products || res.products.length === 0,
+    };
+        
+        // return this.request<SpringPage<Product>>(
+        //     `/products`, {
+        //     params: {
+        //         wholesalerId,
+        //         category,
+        //         page,
+        //         size
+        //     }
+        // });
     }
 
     async toggleProductStatus(wholesalerId: number, productId: number, status: boolean): Promise<Product> {
-        return this.request<Product>(`/wholesalers/${wholesalerId}/products/${productId}/status?status=${status}`, {
+        return this.request<Product>(`/products/${productId}/status`, {
             method: "PATCH",
+            params: { status }
         });
     }
 
     async getCategories(wholesalerId: number = 1): Promise<string[]> {
-        return this.request<string[]>(`/wholesalers/${wholesalerId}/products/categories`);
+        return this.request<string[]>(`/products/categories`, {
+            params: { wholesalerId }
+        });
     }
 }
 

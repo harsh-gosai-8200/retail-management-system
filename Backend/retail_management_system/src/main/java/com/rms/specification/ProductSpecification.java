@@ -29,19 +29,28 @@ public class ProductSpecification {
                         root.get("wholesaler").get("id"), wholesalerId));
             }
 
-            // Filter by category
+//            // Filter by category
+//            if (StringUtils.hasText(category)) {
+//                predicates.add(criteriaBuilder.equal(
+//                        root.get("category"), category));
+//            }
+
+            // Filter by category case-insensitively
             if (StringUtils.hasText(category)) {
                 predicates.add(criteriaBuilder.equal(
-                        root.get("category"), category));
+                        criteriaBuilder.lower(root.get("category")),
+                        category.toLowerCase()
+                ));
             }
 
             // Filter by active status (default to true if not specified)
             if (isActive != null) {
                 predicates.add(criteriaBuilder.equal(
                         root.get("isActive"), isActive));
-            } else {
-                predicates.add(criteriaBuilder.isTrue(root.get("isActive")));
             }
+//            else {
+//                predicates.add(criteriaBuilder.isTrue(root.get("isActive")));
+//            }
 
             // Search in name, description, and skuCode
             if (StringUtils.hasText(searchTerm)) {

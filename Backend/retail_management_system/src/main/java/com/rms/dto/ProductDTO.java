@@ -1,5 +1,6 @@
 package com.rms.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -33,5 +34,7 @@ public class ProductDTO {
     private String unit;
 
     private String imageUrl;
+
+    @JsonProperty("active")
     private Boolean isActive;
 }

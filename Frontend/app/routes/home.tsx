@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import type { Route } from "./+types/home";
+// import type { Route } from "./+types/home";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -10,7 +10,7 @@ import {
 } from "~/components/ui/card";
 import { Store, Package, TrendingUp, ShoppingCart } from "lucide-react";
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: any /* Route.MetaArgs */) {
   return [
     { title: "Retail Management System" },
     {
@@ -22,7 +22,7 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-slate-100">
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
         <div className="container mx-auto px-4 py-4">
@@ -197,6 +197,6 @@ export default function Home() {
           <p>© 2024 Retail Management System. All rights reserved.</p>
         </div>
       </footer>
-    </div>
+    </div >
   );
 }

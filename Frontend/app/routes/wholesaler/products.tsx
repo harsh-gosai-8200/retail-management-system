@@ -70,71 +70,86 @@ import {
 } from "~/components/ui/alert-dialog";
 
 import { cn } from "~/lib/utils";
-import { api, type Product } from "~/services/api";
+import { api, type Product, type SpringPage } from "~/services/api";
 import { productSchema, type ProductFormData } from "~/lib/schemas/wholesaler";
+import { useAuth } from "~/context/AuthContext";
 
 
 // Loader to fetch products with pagination, search, and filtering
 export async function loader({ request }: { request: Request }) {
+  console.log("debug ....")
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get("page") || "0");
   const size = parseInt(url.searchParams.get("size") || "10");
   const search = url.searchParams.get("search") || "";
   const category = url.searchParams.get("category") || "all";
 
+
   // Default wholesaler ID (will come from auth context in real app)
-  const wholesalerId = 1;
+  // const wholesalerId = 1;
+
+  // Get wholesaler ID from localStorage if available (client-side)
+  let wholesalerId=1;
+  if (typeof window !== "undefined") {
+    const storedId = localStorage.getItem("user_id");
+    if (storedId) {
+      wholesalerId = parseInt(storedId);
+    }
+  }
+
 
   try {
+
     let products: Product[] = [];
     let pagination = {
       totalItems: 0,
       totalPages: 0,
       currentPage: 0,
     };
+
+    // All API methods now return SpringPage<Product>
+    let response: SpringPage<Product>;
+
     if (search) {
-      const response = await api.searchProducts(wholesalerId, search, page, size);
-      products = response.content;
-      pagination = {
-        totalItems: response.totalElements,
-        totalPages: response.totalPages,
-        currentPage: response.number,
-      };
+      response = await api.searchProducts(wholesalerId, search, page, size);
     } else if (category && category !== "all") {
-      const response = await api.getProductsByCategory(wholesalerId, category, page, size);
-      products = response.content;
-      pagination = {
-        totalItems: response.totalElements,
-        totalPages: response.totalPages,
-        currentPage: response.number,
-      };
+      response = await api.getProductsByCategory(wholesalerId, category, page, size);
     } else {
-      const response = await api.getProducts(wholesalerId, page, size);
-      products = response.products || [];
-      pagination = {
-        totalItems: response.totalItems,
-        totalPages: response.totalPages,
-        currentPage: response.currentPage,
-      };
+      // Default fetch
+      response = await api.getProducts(wholesalerId, page, size);
+      console.log(response);
     }
 
-    const categories = await api.getCategories(wholesalerId);
-    return { products, categories, pagination, error: null };
+    // Map SpringPage to component state
+    products = response.content || [];
+    pagination = {
+      totalItems: response.totalElements,
+      totalPages: response.totalPages,
+      currentPage: response.number,
+    };
+
+    const categories = ["Electronics", "Clothing", "Groceries", "Home & Kitchen", "Beauty & Personal Care", "Sports & Fitness", "Toys & Games", "Books", "Automotive"];
+    return { products, categories, pagination, error: null, wholesalerId };
   } catch (error) {
     console.error("Failed to fetch products:", error);
     return {
       products: [],
-      categories: [],
+      categories: ["Electronics", "Clothing", "Groceries", "Home & Kitchen", "Beauty & Personal Care", "Sports & Fitness", "Toys & Games", "Books", "Automotive"],
       pagination: { totalItems: 0, totalPages: 0, currentPage: 0 },
-      error: "Failed to load products. Please check the backend connection."
+      error: "Failed to load products. Please check the backend connection.",
+      wholesalerId
     };
   }
 }
 
 export default function ProductsPage() {
-  const { products: initialProducts, categories, pagination, error } = useLoaderData<typeof loader>();
+  const { products: initialProducts, categories, pagination, error, wholesalerId: loaderWholesalerId } = useLoaderData<typeof loader>();
   const revalidator = useRevalidator();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Use user from context if available, otherwise fallback to loader data
+  const { user } = useAuth();
+  const wholesalerId = user?.id || loaderWholesalerId || 1;
 
   const [products, setProducts] = useState<Product[]>(Array.isArray(initialProducts) ? initialProducts : []);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -220,7 +235,7 @@ export default function ProductsPage() {
       stockQuantity: 0,
       unit: "piece",
       skuCode: "",
-      wholesalerId: 1, // Default wholesaler ID
+      wholesalerId: wholesalerId, // Dynamic wholesaler ID
       imageUrl: "",
       isActive: true,
     },
@@ -242,7 +257,7 @@ export default function ProductsPage() {
       stockQuantity: 0,
       unit: "piece",
       skuCode: `SKU-${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`, // Auto-generate SKU
-      wholesalerId: 1,
+      wholesalerId: wholesalerId,
       imageUrl: "",
       isActive: true,
     });
@@ -262,7 +277,7 @@ export default function ProductsPage() {
       skuCode: product.skuCode,
       wholesalerId: product.wholesalerId,
       imageUrl: product.imageUrl || "",
-      isActive: product.isActive,
+      isActive: product.active,
     });
     setIsDialogOpen(true);
   };
@@ -273,13 +288,18 @@ export default function ProductsPage() {
   };
 
   const onSubmit = async (data: ProductFormData) => {
+
     setIsSubmitting(true);//to prevent fro doulble click
+
+    console.log(wholesalerId)
+    setIsSubmitting(true);
+
     try {
       if (editingProduct && editingProduct.id) {
-        await api.updateProduct(1, editingProduct.id, data);
+        await api.updateProduct(wholesalerId, editingProduct.id, data);
         toast.success("Product updated successfully");
       } else {
-        await api.createProduct(1, data);
+        await api.createProduct(wholesalerId, data);
         toast.success("Product created successfully");
       }
       setIsDialogOpen(false);
@@ -295,7 +315,7 @@ export default function ProductsPage() {
   const handleDelete = async () => {
     if (!productToDelete?.id) return;
     try {
-      await api.deleteProduct(1, productToDelete.id);
+      await api.deleteProduct(wholesalerId, productToDelete.id);
       toast.success("Product deleted successfully");
       setIsDeleteDialogOpen(false);
       revalidator.revalidate();
@@ -308,8 +328,8 @@ export default function ProductsPage() {
   const handleToggleStatus = async (product: Product) => {
     if (!product.id) return;
     try {
-      await api.toggleProductStatus(1, product.id, !product.isActive);
-      toast.success(`Product ${product.isActive ? "deactivated" : "activated"}`);
+      await api.toggleProductStatus(wholesalerId, product.id, !product.active);
+      toast.success(`Product ${product.active ? "deactivated" : "activated"}`);
       revalidator.revalidate();
     } catch (err) {
       console.error(err);
@@ -677,7 +697,7 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus }: { product: P
     <div
       className={cn(
         "group relative bg-white border rounded-xl overflow-hidden hover:shadow-md",
-        product.isActive ? "border-slate-200" : "border-slate-100 opacity-75 grayscale-[0.5]"
+        product.active ? "border-slate-200" : "border-slate-100 opacity-75 grayscale-[0.5]"
       )}
     >
       {/* Status Badge */}
@@ -688,7 +708,7 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus }: { product: P
         {product.stockQuantity === 0 && (
           <Badge variant="destructive">Out of Stock</Badge>
         )}
-        {!product.isActive && (
+        {!product.active && (
           <Badge variant="outline" className="bg-slate-100 text-slate-600">Inactive</Badge>
         )}
       </div>
@@ -706,8 +726,8 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus }: { product: P
               <Pencil className="h-4 w-4 mr-2" /> Edit
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onToggleStatus}>
-              {product.isActive ? <XCircle className="h-4 w-4 mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-              {product.isActive ? "Deactivate" : "Activate"}
+              {product.active ? <XCircle className="h-4 w-4 mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              {product.active ? "Deactivate" : "Activate"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onDelete} className="text-red-600">
@@ -753,7 +773,7 @@ function ProductListItem({ product, onEdit, onDelete, onToggleStatus }: { produc
   return (
     <div className={cn(
       "grid grid-cols-12 gap-4 p-4 items-center transition-colors hover:bg-slate-50 group",
-      !product.isActive && "opacity-60 bg-slate-50/50"
+      !product.active && "opacity-60 bg-slate-50/50"
     )}>
       <div className="col-span-4 flex items-center gap-3">
         <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
@@ -763,7 +783,7 @@ function ProductListItem({ product, onEdit, onDelete, onToggleStatus }: { produc
           <h4 className="font-medium text-slate-900">{product.name}</h4>
           <div className="flex gap-2 text-xs">
             <span className="text-slate-500">SKU: {product.skuCode}</span>
-            {!product.isActive && <span className="text-red-500 font-medium">Inactive</span>}
+            {!product.active && <span className="text-red-500 font-medium">Inactive</span>}
           </div>
         </div>
       </div>
@@ -789,7 +809,7 @@ function ProductListItem({ product, onEdit, onDelete, onToggleStatus }: { produc
             <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onToggleStatus}>{product.isActive ? "Deactivate" : "Activate"}</DropdownMenuItem>
+            <DropdownMenuItem onClick={onToggleStatus}>{product.active ? "Deactivate" : "Activate"}</DropdownMenuItem>
             <DropdownMenuItem onClick={onDelete} className="text-red-600">Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

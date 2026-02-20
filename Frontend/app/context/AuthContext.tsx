@@ -27,20 +27,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const location = useLocation();
 
     useEffect(() => {
-        const storedToken = localStorage.getItem("jwt_token");
-        const storedRole = localStorage.getItem("user_role");
-        const storedUserId = localStorage.getItem("user_id");
-        const storedUsername = localStorage.getItem("username");
+         if (typeof window !== "undefined") {
+    const storedToken = localStorage.getItem("jwt_token");
+    const storedRole = localStorage.getItem("user_role");
+    const storedUserId = localStorage.getItem("user_id");
+    const storedUsername = localStorage.getItem("username");
 
-        if (storedToken && storedRole && storedUserId && storedUsername) {
-            setToken(storedToken);
-            setUser({
-                role: storedRole,
-                id: parseInt(storedUserId),
-                username: storedUsername
-            });
-        }
-        setIsLoading(false);
+    if (storedToken && storedRole && storedUserId && storedUsername) {
+      setToken(storedToken);
+      setUser({
+        role: storedRole,
+        id: parseInt(storedUserId),
+        username: storedUsername
+      });
+    }
+    setIsLoading(false);
+  }
+        // const storedToken = localStorage.getItem("jwt_token");
+        // const storedRole = localStorage.getItem("user_role");
+        // const storedUserId = localStorage.getItem("user_id");
+        // const storedUsername = localStorage.getItem("username");
+
+        // if (storedToken && storedRole && storedUserId && storedUsername) {
+        //     setToken(storedToken);
+        //     setUser({
+        //         role: storedRole,
+        //         id: parseInt(storedUserId),
+        //         username: storedUsername
+        //     });
+        // }
+        // setIsLoading(false);
     }, []);
 
     const login = async (credentials: LoginRequest) => {

@@ -44,7 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
             } catch (Exception e) {
-                // Token invalid - just continue without authentication
+                e.printStackTrace();
             }
         }
 

@@ -37,6 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <AuthProvider>
           {children}
         </AuthProvider>
+        {/* // {children} */}
         <Toaster />
         <ScrollRestoration />
         <Scripts />
@@ -49,6 +50,11 @@ import { AuthProvider } from "./context/AuthContext";
 
 export default function App() {
   return <Outlet />;
+  // return (
+  //   <AuthProvider>
+  //     <Outlet />
+  //   </AuthProvider>
+  // );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

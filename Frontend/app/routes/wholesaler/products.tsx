@@ -77,20 +77,26 @@ import { useAuth } from "~/context/AuthContext";
 
 // Loader to fetch products with pagination, search, and filtering
 export async function loader({ request }: { request: Request }) {
+  console.log("debug ....")
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get("page") || "0");
   const size = parseInt(url.searchParams.get("size") || "10");
   const search = url.searchParams.get("search") || "";
   const category = url.searchParams.get("category") || "all";
 
+
+  // Default wholesaler ID (will come from auth context in real app)
+  // const wholesalerId = 1;
+
   // Get wholesaler ID from localStorage if available (client-side)
-  let wholesalerId = 1;
+  let wholesalerId=1;
   if (typeof window !== "undefined") {
     const storedId = localStorage.getItem("user_id");
     if (storedId) {
       wholesalerId = parseInt(storedId);
     }
   }
+
 
   try {
 
@@ -122,13 +128,13 @@ export async function loader({ request }: { request: Request }) {
       currentPage: response.number,
     };
 
-    const categories = ["All", "Electronics", "Clothing", "Groceries", "Home & Kitchen", "Beauty & Personal Care", "Sports & Fitness", "Toys & Games", "Books", "Automotive"];
+    const categories = ["Electronics", "Clothing", "Groceries", "Home & Kitchen", "Beauty & Personal Care", "Sports & Fitness", "Toys & Games", "Books", "Automotive"];
     return { products, categories, pagination, error: null, wholesalerId };
   } catch (error) {
     console.error("Failed to fetch products:", error);
     return {
       products: [],
-      categories: ["All", "Electronics", "Clothing", "Groceries", "Home & Kitchen", "Beauty & Personal Care", "Sports & Fitness", "Toys & Games", "Books", "Automotive"],
+      categories: ["Electronics", "Clothing", "Groceries", "Home & Kitchen", "Beauty & Personal Care", "Sports & Fitness", "Toys & Games", "Books", "Automotive"],
       pagination: { totalItems: 0, totalPages: 0, currentPage: 0 },
       error: "Failed to load products. Please check the backend connection.",
       wholesalerId
@@ -208,16 +214,16 @@ export default function ProductsPage() {
       return newParams;
     });
   };
-  useEffect(() => {
-    if (Array.isArray(initialProducts)) {
-      setProducts(initialProducts);
-    } else {
-      setProducts([]);
-    }
-    if (error) {
-      toast.error(error);
-    }
-  }, [initialProducts, error]);
+  // useEffect(() => {
+  //   if (Array.isArray(initialProducts)) {
+  //     setProducts(initialProducts);
+  //   } else {
+  //     setProducts([]);
+  //   }
+  //   if (error) {
+  //     toast.error(error);
+  //   }
+  // }, [initialProducts, error]);
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema) as any,
@@ -271,7 +277,7 @@ export default function ProductsPage() {
       skuCode: product.skuCode,
       wholesalerId: product.wholesalerId,
       imageUrl: product.imageUrl || "",
-      isActive: product.isActive,
+      isActive: product.active,
     });
     setIsDialogOpen(true);
   };
@@ -282,8 +288,12 @@ export default function ProductsPage() {
   };
 
   const onSubmit = async (data: ProductFormData) => {
+
+    setIsSubmitting(true);//to prevent fro doulble click
+
     console.log(wholesalerId)
     setIsSubmitting(true);
+
     try {
       if (editingProduct && editingProduct.id) {
         await api.updateProduct(wholesalerId, editingProduct.id, data);
@@ -318,8 +328,8 @@ export default function ProductsPage() {
   const handleToggleStatus = async (product: Product) => {
     if (!product.id) return;
     try {
-      await api.toggleProductStatus(wholesalerId, product.id, !product.isActive);
-      toast.success(`Product ${product.isActive ? "deactivated" : "activated"}`);
+      await api.toggleProductStatus(wholesalerId, product.id, !product.active);
+      toast.success(`Product ${product.active ? "deactivated" : "activated"}`);
       revalidator.revalidate();
     } catch (err) {
       console.error(err);
@@ -687,7 +697,7 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus }: { product: P
     <div
       className={cn(
         "group relative bg-white border rounded-xl overflow-hidden hover:shadow-md",
-        product.isActive ? "border-slate-200" : "border-slate-100 opacity-75 grayscale-[0.5]"
+        product.active ? "border-slate-200" : "border-slate-100 opacity-75 grayscale-[0.5]"
       )}
     >
       {/* Status Badge */}
@@ -698,7 +708,7 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus }: { product: P
         {product.stockQuantity === 0 && (
           <Badge variant="destructive">Out of Stock</Badge>
         )}
-        {!product.isActive && (
+        {!product.active && (
           <Badge variant="outline" className="bg-slate-100 text-slate-600">Inactive</Badge>
         )}
       </div>
@@ -716,8 +726,8 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus }: { product: P
               <Pencil className="h-4 w-4 mr-2" /> Edit
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onToggleStatus}>
-              {product.isActive ? <XCircle className="h-4 w-4 mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-              {product.isActive ? "Deactivate" : "Activate"}
+              {product.active ? <XCircle className="h-4 w-4 mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              {product.active ? "Deactivate" : "Activate"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onDelete} className="text-red-600">
@@ -763,7 +773,7 @@ function ProductListItem({ product, onEdit, onDelete, onToggleStatus }: { produc
   return (
     <div className={cn(
       "grid grid-cols-12 gap-4 p-4 items-center transition-colors hover:bg-slate-50 group",
-      !product.isActive && "opacity-60 bg-slate-50/50"
+      !product.active && "opacity-60 bg-slate-50/50"
     )}>
       <div className="col-span-4 flex items-center gap-3">
         <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
@@ -773,7 +783,7 @@ function ProductListItem({ product, onEdit, onDelete, onToggleStatus }: { produc
           <h4 className="font-medium text-slate-900">{product.name}</h4>
           <div className="flex gap-2 text-xs">
             <span className="text-slate-500">SKU: {product.skuCode}</span>
-            {!product.isActive && <span className="text-red-500 font-medium">Inactive</span>}
+            {!product.active && <span className="text-red-500 font-medium">Inactive</span>}
           </div>
         </div>
       </div>
@@ -799,7 +809,7 @@ function ProductListItem({ product, onEdit, onDelete, onToggleStatus }: { produc
             <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onToggleStatus}>{product.isActive ? "Deactivate" : "Activate"}</DropdownMenuItem>
+            <DropdownMenuItem onClick={onToggleStatus}>{product.active ? "Deactivate" : "Activate"}</DropdownMenuItem>
             <DropdownMenuItem onClick={onDelete} className="text-red-600">Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

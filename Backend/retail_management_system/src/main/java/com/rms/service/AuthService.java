@@ -36,7 +36,7 @@ public class AuthService {
 
         // 2. Create user - using username from request
         User user = new User();
-        user.setUsername(request.getUsername());  // ✅ Fixed: using getUsername()
+        user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setPhone(request.getPhone());
@@ -101,7 +101,7 @@ public class AuthService {
                 token,
                 user.getRole().name(),
                 user.getId(),
-                user.getUsername()  // ✅ Using getUsername() from User entity
+                user.getUsername()
         );
     }
 }

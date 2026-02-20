@@ -14,6 +14,7 @@ import {
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { useState } from "react";
+import { useAuth } from "~/context/AuthContext";
 
 const navigation = [
   {
@@ -51,6 +52,7 @@ const navigation = [
 export default function WholesalerLayout() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const {logout} = useAuth();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -81,7 +83,7 @@ export default function WholesalerLayout() {
             <Button variant="ghost" size="icon">
               <User className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={() => logout()}>
               <LogOut className="h-5 w-5 text-red-600" />
             </Button>
           </div>

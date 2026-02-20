@@ -25,6 +25,9 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Version
+    private Integer version;
+
     private String category;
 
     @Column(nullable = false, precision = 10, scale = 2)

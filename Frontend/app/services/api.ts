@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
 
-const BASE_URL = "/api";
+const BASE_URL = "http://localhost:8080/api";
 
 export interface LoginRequest {
     email: string;
@@ -29,7 +29,8 @@ export interface RegisterRequest {
 }
 
 export interface Product {
-    id: number;
+    id?: number;
+    version?: number; 
     name: string;
     description: string;
     price: number;
@@ -40,7 +41,7 @@ export interface Product {
     wholesalerId: number;
     wholesalerName?: string;
     imageUrl: string | null;
-    isActive: boolean;
+    active: boolean;
 }
 
 // PaginatedResponse is deprecated, use SpringPage
@@ -71,6 +72,25 @@ class ApiService {
                 "ngrok-skip-browser-warning": "true",
             },
         });
+
+        // 🔥 ADD THIS REQUEST INTERCEPTOR
+    this.axiosInstance.interceptors.request.use((config) => {
+
+        if (typeof window !== "undefined") {
+        const token = localStorage.getItem("jwt_token");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    }
+    return config;
+        // const token = localStorage.getItem("jwt_token");
+
+        // if (token) {
+        //     config.headers.Authorization = `Bearer ${token}`;
+        // }
+
+        // return config;
+    });
 
         // Interceptor to handle responses and errors
         this.axiosInstance.interceptors.response.use(
@@ -105,6 +125,7 @@ class ApiService {
             method: "POST",
             data: credentials,
         });
+        
     }
 
     async register(data: RegisterRequest): Promise<void> {
@@ -116,21 +137,34 @@ class ApiService {
 
     // Products
     async getProducts(
-        wholesalerId: number = 1,
+        wholesalerId: number,
         page: number = 0,
         size: number = 10,
         sortBy: string = "name",
         sortDir: string = "asc"
     ): Promise<SpringPage<Product>> {
-        return this.request<SpringPage<Product>>(
-            `/products`, {
-            params: {
-                wholesalerId,
-                page,
-                size,
-                sort: `${sortBy},${sortDir}`
-            }
-        });
+        const res = await this.request<any>(
+    `/products`,
+    { params: { wholesalerId, page, size, sort: `${sortBy},${sortDir}` } }
+  );
+
+  return {
+    content: res.products || [],
+    totalPages: res.totalPages,
+    totalElements: res.totalItems,
+    size: res.pageSize,
+    number: res.currentPage,
+    empty: !res.products || res.products.length === 0,
+  };
+        // return this.request<SpringPage<Product>>(
+        //     `/products`, {
+        //     params: {
+        //         wholesalerId,
+        //         page,
+        //         size,
+        //         sort: `${sortBy},${sortDir}`
+        //     }
+        // });
     }
 
     async getProduct(wholesalerId: number, productId: number): Promise<Product> {
@@ -138,9 +172,11 @@ class ApiService {
     }
 
     async createProduct(wholesalerId: number, data: Partial<Product>): Promise<Product> {
+         const { id, version, ...payload } = data;
+        
         return this.request<Product>(`/products`, {
             method: "POST",
-            data: data,
+            data: payload,
             params: { wholesalerId }
         });
     }
@@ -162,27 +198,63 @@ class ApiService {
     }
 
     async searchProducts(wholesalerId: number, keyword: string, page: number = 0, size: number = 10): Promise<SpringPage<Product>> {
-        return this.request<SpringPage<Product>>(
-            `/products`, {
-            params: {
-                wholesalerId,
-                search: keyword,
-                page,
-                size
-            }
-        });
+        const res = await this.request<any>(`/products`, {
+        params: {
+            wholesalerId,
+            search: keyword,
+            page,
+            size
+        }
+    });
+
+    return {
+        content: res.products || [],
+        totalPages: res.totalPages,
+        totalElements: res.totalItems,
+        size: res.pageSize,
+        number: res.currentPage,
+        empty: !res.products || res.products.length === 0,
+    };
+        
+        // return this.request<SpringPage<Product>>(
+        //     `/products`, {
+        //     params: {
+        //         wholesalerId,
+        //         search: keyword,
+        //         page,
+        //         size
+        //     }
+        // });
     }
 
     async getProductsByCategory(wholesalerId: number, category: string, page: number = 0, size: number = 10): Promise<SpringPage<Product>> {
-        return this.request<SpringPage<Product>>(
-            `/products`, {
-            params: {
-                wholesalerId,
-                category,
-                page,
-                size
-            }
-        });
+        const res = await this.request<any>(`/products`, {
+        params: {
+            wholesalerId,
+            category,
+            page,
+            size,
+        }
+    });
+
+    return {
+        content: res.products || [],
+        totalPages: res.totalPages,
+        totalElements: res.totalItems,
+        size: res.pageSize,
+        number: res.currentPage,
+        empty: !res.products || res.products.length === 0,
+    };
+        
+        // return this.request<SpringPage<Product>>(
+        //     `/products`, {
+        //     params: {
+        //         wholesalerId,
+        //         category,
+        //         page,
+        //         size
+        //     }
+        // });
     }
 
     async toggleProductStatus(wholesalerId: number, productId: number, status: boolean): Promise<Product> {

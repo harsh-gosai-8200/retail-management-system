@@ -141,7 +141,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-lg shadow">
               <h4 className="font-semibold text-lg text-slate-900 mb-2">
-                ✅ Complete Product Catalog
+                Complete Product Catalog
               </h4>
               <p className="text-slate-600">
                 Add, edit, and manage your entire product inventory with ease
@@ -149,7 +149,7 @@ export default function Home() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h4 className="font-semibold text-lg text-slate-900 mb-2">
-                ✅ Order Approval System
+                Order Approval System
               </h4>
               <p className="text-slate-600">
                 Review, approve, reject, or modify incoming orders
@@ -157,7 +157,7 @@ export default function Home() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h4 className="font-semibold text-lg text-slate-900 mb-2">
-                ✅ Payment Management
+                Payment Management
               </h4>
               <p className="text-slate-600">
                 Track payments with multiple payment modes support
@@ -165,7 +165,7 @@ export default function Home() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h4 className="font-semibold text-lg text-slate-900 mb-2">
-                ✅ Professional Invoices
+                Professional Invoices
               </h4>
               <p className="text-slate-600">
                 Generate detailed invoices with GST calculations
@@ -173,7 +173,7 @@ export default function Home() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h4 className="font-semibold text-lg text-slate-900 mb-2">
-                ✅ Complete Order History
+                Complete Order History
               </h4>
               <p className="text-slate-600">
                 Access full transaction history with advanced filters
@@ -181,7 +181,7 @@ export default function Home() {
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h4 className="font-semibold text-lg text-slate-900 mb-2">
-                ✅ Real-time Analytics
+                Real-time Analytics
               </h4>
               <p className="text-slate-600">
                 View business insights and performance metrics

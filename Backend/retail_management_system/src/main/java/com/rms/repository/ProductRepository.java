@@ -17,7 +17,11 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     Optional<Product> findBySkuCodeAndIdNot(String skuCode, Long id);
     boolean existsBySkuCode(String skuCode);
-
+    List<Product> findByWholesalerIdAndIsActiveTrue(Long wholesalerId);
+    Page<Product> findByWholesalerIdAndIsActiveTrue(
+            Long wholesalerId,
+            Pageable pageable
+    );
 }
 
 

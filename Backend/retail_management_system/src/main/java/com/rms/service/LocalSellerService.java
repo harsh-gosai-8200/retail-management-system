@@ -9,17 +9,15 @@ import java.util.List;
 
 public interface LocalSellerService {
 
+    // Get all active wholesalers
     List<WholesalerDTO> getActiveWholesalers();
 
+    // Get all active products of a wholesaler
     List<ProductDTO> getActiveProductsByWholesaler(Long wholesalerId);
 
+    // Get only subscribed (mapped) wholesalers of a local seller
+    List<WholesalerDTO> getSubscriptedWholesalers(Long localSellerId);
 
-    List<WholesalerDTO> getMappedWholesalers(Long localSellerId);
-
-    Page<?> getProductsOfWholesaler(
-            Long localSellerId,
-            Long wholesalerId,
-            Pageable pageable
-    );
-
+    // Get products of a mapped wholesaler (paginated)
+    Page<ProductDTO> getProductsOfWholesaler(Long localSellerId, Long wholesalerId, Pageable pageable);
 }

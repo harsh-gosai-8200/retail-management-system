@@ -5,6 +5,7 @@ import { RegisterPage } from './pages/auth/RegisterPage.tsx'
 import { WholesalerLayout } from './pages/wholesaler/WholesalerLayout.tsx'
 import { WholesalerDashboard } from './pages/wholesaler/WholesalerDashboard.tsx'
 import { ProductsPage } from './pages/wholesaler/ProductsPage.tsx'
+import LandingPage from "./pages/LandingPage";
 
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -39,6 +40,7 @@ function App() {
       </Route>
 
       <Route path="*" element={<Navigate to="/wholesaler" replace />} />
+      <Route path="/" element={<LandingPage />} />
     </Routes>
   )
 }

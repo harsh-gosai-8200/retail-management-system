@@ -1,17 +1,11 @@
-import { reactRouter } from "@react-router/dev/vite";
-import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
+import tailwindcss from '@tailwindcss/vite'
 
+// https://vite.dev/config/
 export default defineConfig({
-  server: {
-    proxy: {
-      '/api': {
-        target: "https://3371-43-241-193-128.ngrok-free.app",
-        changeOrigin: true,
-        secure: false,
-      }
-    }
-  },
-  plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
-});
+  plugins: [
+    react(),
+    tailwindcss(),
+  ],
+})

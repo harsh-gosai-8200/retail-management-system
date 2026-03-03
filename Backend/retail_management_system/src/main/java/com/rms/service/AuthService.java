@@ -96,12 +96,37 @@ public class AuthService {
                 user.getId()
         );
 
+        Long roleId = null;
+        String businessName = null;
+        String shopName = null;
+
+        if (user.getRole() == Role.WHOLESALER) {
+            Wholesaler wholesaler = wholesalerRepository.findByUserId(user.getId())
+                    .orElse(null);
+            if (wholesaler != null) {
+                roleId = wholesaler.getId();           // ✅ This is what you need for products
+                businessName = wholesaler.getBusinessName();
+            }
+        } else if (user.getRole() == Role.LOCAL_SELLER) {
+            LocalSeller seller = localSellerRepository.findByUserId(user.getId())
+                    .orElse(null);
+            if (seller != null) {
+                roleId = seller.getId();               // ✅ This is what you need for orders/cart
+                shopName = seller.getShopName();
+            }
+        }
+
         // 4. Return response with username
-        return new LoginResponceDTO(
-                token,
-                user.getRole().name(),
-                user.getId(),
-                user.getUsername()
-        );
+        return LoginResponceDTO.builder()
+                .token(token)
+                .tokenType("Bearer")
+                .userId(user.getId())
+                .roleId(roleId)                          // ✅ Send this to frontend
+                .role(user.getRole().name())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .businessName(businessName)
+                .shopName(shopName)
+                .build();
     }
 }

@@ -2,6 +2,7 @@ package com.rms.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "local_sellers")
@@ -23,4 +24,8 @@ public class LocalSeller {
     private Double latitude;
 
     private Double longitude;
+
+    public String getusername() {
+        return user.getUsername();
+    }
 }

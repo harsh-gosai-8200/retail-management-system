@@ -1,11 +1,13 @@
 package com.rms.model;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 
 @Entity
 @Table(name = "wholesaler_seller_mapping")
 @Data
+
 public class WholesalerSellerMapping {
 
     @Id
@@ -20,6 +22,9 @@ public class WholesalerSellerMapping {
     @JoinColumn(name = "local_seller_id")
     private  LocalSeller localSeller;
 
-    private String status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SubscriptionStatus status;
 
 }

@@ -16,8 +16,13 @@ public interface LocalSellerService {
     List<ProductDTO> getActiveProductsByWholesaler(Long wholesalerId);
 
     // Get only subscribed (mapped) wholesalers of a local seller
-    List<WholesalerDTO> getSubscriptedWholesalers(Long localSellerId);
+    List<WholesalerDTO> getSubscribedWholesalers(Long localSellerId);
 
     // Get products of a mapped wholesaler (paginated)
     Page<ProductDTO> getProductsOfWholesaler(Long localSellerId, Long wholesalerId, Pageable pageable);
+
+
+    void subscribeWholesaler(Long localSellerId, Long wholesalerId);
+
+    void unsubscribeWholesaler(Long localSellerId, Long wholesalerId);
 }

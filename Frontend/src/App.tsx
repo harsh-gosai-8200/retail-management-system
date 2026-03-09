@@ -6,6 +6,11 @@ import { WholesalerLayout } from './pages/wholesaler/WholesalerLayout.tsx'
 import { WholesalerDashboard } from './pages/wholesaler/WholesalerDashboard.tsx'
 import { ProductsPage } from './pages/wholesaler/ProductsPage.tsx'
 import LandingPage from "./pages/LandingPage";
+import { LocalSellerLayout } from "./pages/localSeller/layout.tsx";
+//import { WholesalersPage } from "./pages/localSeller/WholesalersPage";
+import  {LocalSellerDashboard } from "./pages/localSeller/LocalSellerDashboard.tsx";
+import { WholesalersPage } from './pages/localSeller/WholesalersPage.tsx'
+import { WholesalerViews } from './pages/localSeller/wholesaler/WholesalerViews.tsx'
 
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -29,18 +34,32 @@ function ProtectedRoute() {
 function App() {
   return (
     <Routes>
+
+      {/* Public Routes */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/auth/login" element={<LoginPage />} />
       <Route path="/auth/register" element={<RegisterPage />} />
 
+      {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
+
+        {/* Wholesaler Panel */}
         <Route path="/wholesaler" element={<WholesalerLayout />}>
           <Route index element={<WholesalerDashboard />} />
           <Route path="products" element={<ProductsPage />} />
         </Route>
-      </Route>
 
-      <Route path="*" element={<Navigate to="/wholesaler" replace />} />
-      <Route path="/" element={<LandingPage />} />
+<Route path="/local-seller" element={<LocalSellerLayout />}>
+  <Route path="dashboard" element={<LocalSellerDashboard />} />
+  <Route path="wholesalers" element={<WholesalersPage />} />
+  <Route path="wholesalers/:id" element={<WholesalerViews />} />
+</Route>
+
+</Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+
     </Routes>
   )
 }

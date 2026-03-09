@@ -74,8 +74,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       const state = location.state as { from?: Location } | null
-      const from = state?.from?.pathname ?? '/wholesaler'
-      navigate(from, { replace: true })
+
+if (state?.from?.pathname) {
+  navigate(state.from.pathname, { replace: true })
+} else {
+  if (response.role === 'WHOLESALER') {
+    navigate('/wholesaler', { replace: true })
+  } else if (response.role === 'LOCAL_SELLER') {
+    navigate('/local-seller/dashboard', { replace: true })
+  } else {
+    navigate('/', { replace: true })
+  }
+}
     } catch (error) {
       console.error('Login failed:', error)
       throw error

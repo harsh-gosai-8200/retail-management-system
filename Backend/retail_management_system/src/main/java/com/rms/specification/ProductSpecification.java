@@ -10,6 +10,33 @@ import java.util.List;
 
 public class ProductSpecification {
 
+
+    /**
+     * Filter by wholesaler ID
+     */
+    public static Specification<Product> byWholesalerId(Long wholesalerId) {
+        return (root, query, cb) -> {
+            if (wholesalerId == null) return cb.conjunction();
+            return cb.equal(root.get("wholesaler").get("id"), wholesalerId);
+        };
+    }
+
+    /**
+     * Filter by low stock (stock less than or equal to threshold)
+     */
+    public static Specification<Product> lowStock(int threshold) {
+        return (root, query, cb) ->
+                cb.lessThanOrEqualTo(root.get("stockQuantity"), threshold);
+    }
+
+    /**
+     * Filter by out of stock (stock quantity = 0)
+     */
+    public static Specification<Product> outOfStock() {
+        return (root, query, cb) ->
+                cb.equal(root.get("stockQuantity"), 0);
+    }
+
     /**
      * Build dynamic query based on filters
      * This SINGLE method replaces ALL custom query methods

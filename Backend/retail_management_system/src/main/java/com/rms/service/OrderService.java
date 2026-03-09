@@ -9,6 +9,7 @@ import com.rms.repository.*;
 import com.rms.specification.OrderSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,20 +48,28 @@ public class OrderService {
      */
     @Transactional
     public OrderResponseDTO placeOrder(OrderRequestDTO request) {
-        log.info("Placing order for seller: {}", request.getSellerId());
+        log.info("========== PLACING ORDER ==========");
+        log.info("Seller ID: {}, Wholesaler ID: {}", request.getSellerId(), request.getWholesalerId());
+        log.info("Items count: {}", request.getItems().size());
 
+        // Get seller
         LocalSeller seller = localSellerRepository.findById(request.getSellerId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Seller not found with ID: " + request.getSellerId()
                 ));
 
+        // Get wholesaler
         Wholesaler wholesaler = wholesalerRepository.findById(request.getWholesalerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Wholesaler not found"));
 
+        // Create order items
         List<OrderItem> orderItems = request.getItems().stream()
                 .map(itemRequest -> createOrderItem(itemRequest, wholesaler))
                 .collect(Collectors.toList());
 
+        log.info("Created {} order items", orderItems.size());
+
+        // Calculate totals
         BigDecimal subtotal = orderItems.stream()
                 .map(OrderItem::getTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -68,7 +77,9 @@ public class OrderService {
         BigDecimal tax = subtotal.multiply(TAX_RATE).setScale(2, RoundingMode.HALF_UP);
         BigDecimal total = subtotal.add(tax);
 
-        // Create order using Builder pattern
+        log.info("Subtotal: {}, Tax: {}, Total: {}", subtotal, tax, total);
+
+        // Create order
         Order order = new Order();
         order.setOrderNumber(generateOrderNumber());
         order.setSeller(seller);
@@ -84,32 +95,41 @@ public class OrderService {
         order.setDeliveryInstructions(request.getDeliveryInstructions());
 
         Order savedOrder = orderRepository.save(order);
+        log.info("Order saved with ID: {}", savedOrder.getId());
 
-        // Associate items with order
-        orderItems.forEach(item -> {
+        // Save items and reduce stock
+        for (OrderItem item : orderItems) {
             item.setOrder(savedOrder);
-            orderItemRepository.save(item);
+            OrderItem savedItem = orderItemRepository.save(item);
+            log.info("Saved item ID: {} for product: {}", savedItem.getId(), item.getProduct().getName());
 
             // Reduce stock
             Product product = item.getProduct();
             product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
             productRepository.save(product);
-        });
+        }
 
         // Clear from cart
         request.getItems().forEach(itemRequest ->
                 cartItemRepository.findBySellerIdAndProductId(seller.getId(), itemRequest.getProductId())
-                        .ifPresent(cartItemRepository::delete)
+                        .ifPresent(cartItem -> {
+                            cartItemRepository.delete(cartItem);
+                            log.info("Removed from cart: product {}", itemRequest.getProductId());
+                        })
         );
 
-        Order orderWithItems = orderRepository.findById(savedOrder.getId())
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        List<OrderItem> itemsFromDb = orderItemRepository.findByOrderId(savedOrder.getId());
+        log.info("Manually loaded {} items from database", itemsFromDb.size());
 
-        log.info("Order after refresh has {} items", orderWithItems.getItems().size());
+        // Clear and add instead of replacing the collection
+        savedOrder.getItems().clear();
+        savedOrder.getItems().addAll(itemsFromDb);
 
-        log.info("Order placed successfully. Order Number: {}", savedOrder.getOrderNumber());
+        log.info("Final order has {} items", savedOrder.getItems().size());
+        OrderResponseDTO response = mapToDTO(savedOrder);
+        log.info("Response DTO has {} items", response.getItems().size());
 
-        return mapToDTO(savedOrder);
+        return response;
     }
 
     /**
@@ -341,6 +361,11 @@ public class OrderService {
      * @return
      */
     private OrderItemDTO mapItemToDTO(OrderItem item) {
-        return modelMapper.map(item, OrderItemDTO.class);
+        OrderItemDTO dto = modelMapper.map(item, OrderItemDTO.class);
+        if (item.getProduct() != null) {
+            dto.setProductId(item.getProduct().getId());
+        }
+
+        return dto;
     }
 }

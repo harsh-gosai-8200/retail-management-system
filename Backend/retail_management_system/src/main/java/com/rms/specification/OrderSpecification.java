@@ -13,6 +13,20 @@ import java.util.List;
 
 public class OrderSpecification {
 
+    public static Specification<Order> byWholesalerId(Long wholesalerId) {
+        return (root, query, cb) -> {
+            if (wholesalerId == null) return cb.conjunction();
+            return cb.equal(root.get("wholesaler").get("id"), wholesalerId);
+        };
+    }
+
+    public static Specification<Order> byDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        return (root, query, cb) -> {
+            if (startDate == null || endDate == null) return cb.conjunction();
+            return cb.between(root.get("createdAt"), startDate, endDate);
+        };
+    }
+
     public static Specification<Order> bySellerId(Long sellerId) {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("seller").get("id"), sellerId);

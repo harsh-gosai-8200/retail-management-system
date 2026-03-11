@@ -5,6 +5,8 @@ import { RegisterPage } from './pages/auth/RegisterPage.tsx'
 import { WholesalerLayout } from './pages/wholesaler/WholesalerLayout.tsx'
 import { WholesalerDashboard } from './pages/wholesaler/WholesalerDashboard.tsx'
 import { ProductsPage } from './pages/wholesaler/ProductsPage.tsx'
+import { OrderDetailPage } from './pages/wholesaler/OrderDetailPage.tsx'
+import { OrdersPage } from './pages/wholesaler/OrdersPage.tsx'
 
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -35,6 +37,8 @@ function App() {
         <Route path="/wholesaler" element={<WholesalerLayout />}>
           <Route index element={<WholesalerDashboard />} />
           <Route path="products" element={<ProductsPage />} />
+          <Route path="orders" element={<OrdersPage />} />         
+    <Route path="orders/:id" element={<OrderDetailPage />} />
         </Route>
       </Route>
 

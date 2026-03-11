@@ -20,7 +20,7 @@ interface NavItem {
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/wholesaler', icon: LayoutDashboard, available: true },
   { name: 'Products', href: '/wholesaler/products', icon: Package, available: true },
-  { name: 'Orders', href: '/wholesaler/orders', icon: Package, available: false },
+  { name: 'Orders', href: '/wholesaler/orders', icon: Package, available: true },
   { name: 'Payments', href: '/wholesaler/payments', icon: Package, available: false },
   { name: 'Invoices', href: '/wholesaler/invoices', icon: Package, available: false },
   { name: 'History', href: '/wholesaler/history', icon: Package, available: false },

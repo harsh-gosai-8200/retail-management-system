@@ -156,7 +156,7 @@ class ApiService {
         return error?.message || "API Error";
     }
 
-    private async request<T>(endpoint: string, config: AxiosRequestConfig = {}): Promise<T> {
+    public async request<T>(endpoint: string, config: AxiosRequestConfig = {}): Promise<T> {
         try {
             return await this.axiosInstance.request<any, T>({
                 url: endpoint,

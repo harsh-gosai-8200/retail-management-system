@@ -5,7 +5,6 @@ import com.rms.dto.WholesalerDTO;
 import com.rms.model.*;
 import com.rms.repository.*;
 import jakarta.transaction.Transactional;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -70,9 +69,11 @@ public class LocalSellerServiceImpl implements LocalSellerService {
         log.info("Fetching paginated products for local seller ID: {}, wholesaler ID: {}", localSellerId, wholesalerId);
         // Check if wholesaler is mapped to local seller
         boolean isMapped = mappingRepository
-                .findByLocalSeller_IdAndStatus(localSellerId, SubscriptionStatus.APPROVED)
-                .stream()
-                .anyMatch(m -> m.getWholesaler().getId().equals(wholesalerId));
+                .existsByLocalSeller_IdAndWholesaler_IdAndStatus(
+                        localSellerId,
+                        wholesalerId,
+                        SubscriptionStatus.APPROVED
+                );
 
         if (!isMapped) {
             throw new RuntimeException("Wholesaler not mapped to this local seller");
@@ -144,7 +145,7 @@ public class LocalSellerServiceImpl implements LocalSellerService {
             throw new RuntimeException("Cannot unsubscribe. Subscription not approved.");
         }
 
-        mapping.setStatus(SubscriptionStatus.INACTIVE);
+       mapping.setStatus(SubscriptionStatus.INACTIVE);
         mappingRepository.save(mapping);
     }
 }

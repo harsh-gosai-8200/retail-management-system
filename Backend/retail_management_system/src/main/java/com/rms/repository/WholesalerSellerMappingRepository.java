@@ -20,4 +20,10 @@ public interface WholesalerSellerMappingRepository
     // For checking existing mapping
     WholesalerSellerMapping
     findByLocalSeller_IdAndWholesaler_Id(Long localSellerId, Long wholesalerId);
+
+    boolean existsByLocalSeller_IdAndWholesaler_IdAndStatus(
+            Long localSellerId,
+            Long wholesalerId,
+            SubscriptionStatus status
+    );
 }

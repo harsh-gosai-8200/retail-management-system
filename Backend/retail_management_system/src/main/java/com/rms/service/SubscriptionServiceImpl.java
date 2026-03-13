@@ -1,5 +1,6 @@
 package com.rms.service;
 
+import com.rms.constants.MessageKeys;
 import com.rms.dto.SubscriptionDTO;
 import com.rms.model.SubscriptionStatus;
 import com.rms.model.WholesalerSellerMapping;
@@ -17,6 +18,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     private final WholesalerSellerMappingRepository mappingRepository;
     private final ModelMapper modelMapper;
+    private final MessageService messageService;
 
     // Get all pending requests for a wholesaler
     @Override
@@ -34,7 +36,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         WholesalerSellerMapping mapping =
                 mappingRepository.findByLocalSeller_IdAndWholesaler_Id(localSellerId, wholesalerId);
 
-        if (mapping == null) throw new RuntimeException("Subscription not found");
+        if (mapping == null) throw new RuntimeException(messageService.get(MessageKeys.SUBSCRIPTION_NOT_FOUND));
 
         mapping.setStatus(SubscriptionStatus.APPROVED);
         mappingRepository.save(mapping);
@@ -46,7 +48,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         WholesalerSellerMapping mapping =
                 mappingRepository.findByLocalSeller_IdAndWholesaler_Id(localSellerId, wholesalerId);
 
-        if (mapping == null) throw new RuntimeException("Subscription not found");
+        if (mapping == null) throw new RuntimeException(messageService.get(MessageKeys.SUBSCRIPTION_REJECTED));
 
         mapping.setStatus(SubscriptionStatus.REJECTED);
         mappingRepository.save(mapping);
@@ -65,12 +67,19 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     // Mapping entity → DTO
     private SubscriptionDTO mapToDTO(WholesalerSellerMapping mapping) {
         SubscriptionDTO dto = new SubscriptionDTO();
-        dto.setId(mapping.getId());
-        dto.setLocalSellerId(mapping.getLocalSeller().getId());
-        dto.setLocalSellerName(mapping.getLocalSeller().getusername());
-        dto.setWholesalerId(mapping.getWholesaler().getId());
-        dto.setWholesalerName(mapping.getWholesaler().getusername());
-        dto.setStatus(mapping.getStatus());
+
+        if (mapping !=null) {
+            dto.setId(mapping.getId());
+            if (mapping.getLocalSeller() != null) {
+                dto.setLocalSellerId(mapping.getLocalSeller().getId());
+                dto.setLocalSellerName(mapping.getLocalSeller().getUser().getUsername());
+            }
+            if (mapping.getWholesaler() != null) {
+                dto.setWholesalerId(mapping.getWholesaler().getId());
+                dto.setWholesalerName(mapping.getWholesaler().getUser().getUsername());
+            }
+            dto.setStatus(mapping.getStatus());
+        }
         return dto;
     }
 }

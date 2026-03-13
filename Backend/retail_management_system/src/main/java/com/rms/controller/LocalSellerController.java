@@ -1,8 +1,10 @@
 package com.rms.controller;
 
+import com.rms.constants.MessageKeys;
 import com.rms.dto.ProductDTO;
 import com.rms.dto.WholesalerDTO;
 import com.rms.service.LocalSellerService;
+import com.rms.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -19,6 +21,7 @@ import java.util.List;
 public class LocalSellerController {
 
     private final LocalSellerService localSellerService;
+    private final MessageService messageService;
 
     /*  Get all active wholesalers */
 
@@ -58,7 +61,7 @@ public class LocalSellerController {
             @PathVariable Long wholesalerId) {
 
         localSellerService.subscribeWholesaler(localSellerId, wholesalerId);
-        return ResponseEntity.ok("Subscribed successfully");
+        return ResponseEntity.ok(messageService.get(MessageKeys.SUBSCRIPTION_SUCCESS));
     }
 
     /* unsubscribe whole saller */
@@ -68,7 +71,7 @@ public class LocalSellerController {
             @PathVariable Long wholesalerId) {
 
         localSellerService.unsubscribeWholesaler(localSellerId, wholesalerId);
-        return ResponseEntity.ok("Unsubscribed successfully");
+        return ResponseEntity.ok(messageService.get(MessageKeys.UNSUBSCRIBE_SUCCESS));
     }
 
     /*  Get products of a mapped wholesaler (paginated) */

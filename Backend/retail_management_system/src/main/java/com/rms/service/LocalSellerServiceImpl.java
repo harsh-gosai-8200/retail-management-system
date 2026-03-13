@@ -1,5 +1,6 @@
 package com.rms.service;
 
+import com.rms.constants.MessageKeys;
 import com.rms.dto.ProductDTO;
 import com.rms.dto.WholesalerDTO;
 import com.rms.model.*;
@@ -27,6 +28,7 @@ public class LocalSellerServiceImpl implements LocalSellerService {
     private final WholesalerSellerMappingRepository mappingRepository;
     private final ModelMapper modelMapper;
     private final LocalSellerRepository localSellerRepository;
+    private final MessageService messageService;
 
 
     // Get all active wholesalers
@@ -76,7 +78,7 @@ public class LocalSellerServiceImpl implements LocalSellerService {
                 );
 
         if (!isMapped) {
-            throw new RuntimeException("Wholesaler not mapped to this local seller");
+            throw new RuntimeException(messageService.get(MessageKeys.WHOLESALER_NOT_MAPPED));
         }
 
         // Fetch paginated products
@@ -95,10 +97,10 @@ public class LocalSellerServiceImpl implements LocalSellerService {
 
         // Fetch local seller and wholesaler from DB
         LocalSeller localSeller = localSellerRepository.findById(localSellerId)
-                .orElseThrow(() -> new RuntimeException("Local seller not found"));
+                .orElseThrow(() -> new RuntimeException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND)));
 
         Wholesaler wholesaler = wholesalerRepository.findById(wholesalerId)
-                .orElseThrow(() -> new RuntimeException("Wholesaler not found"));
+                .orElseThrow(() -> new RuntimeException(messageService.get(MessageKeys.WHOLESALER_NOT_FOUND)));
 
         //  Check if mapping already exists
         WholesalerSellerMapping existingMapping =
@@ -108,11 +110,11 @@ public class LocalSellerServiceImpl implements LocalSellerService {
             SubscriptionStatus status = existingMapping.getStatus();
 
             if (SubscriptionStatus.APPROVED.equals(status)) {
-                throw new RuntimeException("Already subscribed to this wholesaler");
+                throw new RuntimeException((messageService.get(MessageKeys.ALREADY_SUBSCRIBED)));
             }
 
             if (SubscriptionStatus.PENDING.equals(status)) {
-                throw new RuntimeException("Subscription request already pending");
+                throw new RuntimeException(messageService.get(MessageKeys.SUBSCRIPTION_PENDING));
             }
 
             // If previously REJECTED or INACTIVE, set to PENDING
@@ -138,11 +140,11 @@ public class LocalSellerServiceImpl implements LocalSellerService {
                 mappingRepository.findByLocalSeller_IdAndWholesaler_Id(localSellerId, wholesalerId);
 
         if (mapping == null) {
-            throw new RuntimeException("Subscription not found");
+            throw new RuntimeException(messageService.get(MessageKeys.SUBSCRIPTION_NOT_FOUND));
         }
 
         if (!(SubscriptionStatus.APPROVED).equals(mapping.getStatus())) {
-            throw new RuntimeException("Cannot unsubscribe. Subscription not approved.");
+            throw new RuntimeException(messageService.get(MessageKeys.SUBSCRIPTION_NOT_APPROVED));
         }
 
        mapping.setStatus(SubscriptionStatus.INACTIVE);

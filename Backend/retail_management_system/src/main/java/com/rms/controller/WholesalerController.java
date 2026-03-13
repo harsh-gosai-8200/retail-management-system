@@ -1,6 +1,8 @@
 package com.rms.controller;
 
+import com.rms.constants.MessageKeys;
 import com.rms.dto.SubscriptionDTO;
+import com.rms.service.MessageService;
 import com.rms.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,7 @@ import java.util.List;
 public class WholesalerController {
 
     private final SubscriptionService subscriptionService;
+    private final MessageService messageService;
 
     // Get pending subscription requests
     @GetMapping("/{wholesalerId}/pending-requests")
@@ -29,7 +32,7 @@ public class WholesalerController {
     public ResponseEntity<String> approveSubscription(@PathVariable Long wholesalerId,
                                                       @PathVariable Long localSellerId) {
         subscriptionService.approveSubscription(wholesalerId, localSellerId);
-        return ResponseEntity.ok("Subscription approved");
+        return ResponseEntity.ok(messageService.get(MessageKeys.SUBSCRIPTION_APPROVED));
     }
 
     // Reject a subscription request
@@ -37,7 +40,7 @@ public class WholesalerController {
     public ResponseEntity<String> rejectSubscription(@PathVariable Long wholesalerId,
                                                      @PathVariable Long localSellerId) {
         subscriptionService.rejectSubscription(wholesalerId, localSellerId);
-        return ResponseEntity.ok("Subscription rejected");
+        return ResponseEntity.ok(messageService.get(MessageKeys.SUBSCRIPTION_REJECTED));
     }
 
     // Get all active local sellers for this wholesaler

@@ -32,7 +32,4 @@ public class Wholesaler {
     @Column(nullable = false)
     private Boolean isActive = true;
 
-    public String getusername() {
-        return user.getUsername();
-    }
 }

@@ -1,6 +1,8 @@
 package com.rms.controller;
 
+import com.rms.constants.MessageKeys;
 import com.rms.dto.SubscriptionDTO;
+import com.rms.service.MessageService;
 import com.rms.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +17,8 @@ import java.util.List;
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
+    private final MessageService messageService;
+
 
     /*
      * API: Get all pending subscription requests for a wholesaler
@@ -42,7 +46,7 @@ public class SubscriptionController {
 
         subscriptionService.approveSubscription(wholesalerId, sellerId);
 
-        return "Subscription approved successfully";
+        return messageService.get(MessageKeys.SUBSCRIPTION_APPROVED);
     }
 
     /*
@@ -58,7 +62,7 @@ public class SubscriptionController {
 
         subscriptionService.rejectSubscription(wholesalerId, sellerId);
 
-        return "Subscription rejected successfully";
+        return messageService.get(MessageKeys.SUBSCRIPTION_REJECTED);
     }
 
     /*

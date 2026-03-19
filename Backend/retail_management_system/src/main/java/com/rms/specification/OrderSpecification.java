@@ -11,31 +11,33 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.rms.constants.Constants.*;
+
 public class OrderSpecification {
 
     public static Specification<Order> byWholesalerId(Long wholesalerId) {
         return (root, query, cb) -> {
             if (wholesalerId == null) return cb.conjunction();
-            return cb.equal(root.get("wholesaler").get("id"), wholesalerId);
+            return cb.equal(root.get(WHOLESALER).get(ID), wholesalerId);
         };
     }
 
     public static Specification<Order> byDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         return (root, query, cb) -> {
             if (startDate == null || endDate == null) return cb.conjunction();
-            return cb.between(root.get("createdAt"), startDate, endDate);
+            return cb.between(root.get(CREATED_AT), startDate, endDate);
         };
     }
 
     public static Specification<Order> bySellerId(Long sellerId) {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("seller").get("id"), sellerId);
+                criteriaBuilder.equal(root.get(SELLER).get(ID), sellerId);
     }
 
 
     public static Specification<Order> byStatus(OrderStatus status) {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("status"), status);
+                criteriaBuilder.equal(root.get(STATUS), status);
     }
 
 
@@ -47,8 +49,8 @@ public class OrderSpecification {
 
             String pattern = "%" + searchTerm.toLowerCase() + "%";
             return criteriaBuilder.or(
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("orderNumber")), pattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("seller").get("shopName")), pattern)
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get(ORDER_NUMBER)), pattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get(SELLER).get(SHOPNAME)), pattern)
             );
         };
     }
@@ -76,26 +78,26 @@ public class OrderSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             if (sellerId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("seller").get("id"), sellerId));
+                predicates.add(criteriaBuilder.equal(root.get(SELLER).get(ID), sellerId));
             }
 
             if (wholesalerId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("wholesaler").get("id"), wholesalerId));
+                predicates.add(criteriaBuilder.equal(root.get(WHOLESALER).get(ID), wholesalerId));
             }
 
             if (status != null) {
-                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+                predicates.add(criteriaBuilder.equal(root.get(STATUS), status));
             }
 
             if (startDate != null && endDate != null) {
-                predicates.add(criteriaBuilder.between(root.get("createdAt"), startDate, endDate));
+                predicates.add(criteriaBuilder.between(root.get(CREATED_AT), startDate, endDate));
             }
 
             if (StringUtils.hasText(searchTerm)) {
                 String pattern = "%" + searchTerm.toLowerCase() + "%";
                 predicates.add(criteriaBuilder.or(
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("orderNumber")), pattern),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("seller").get("shopName")), pattern)
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get(ORDER_NUMBER)), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get(SELLER).get(SHOPNAME)), pattern)
                 ));
             }
 

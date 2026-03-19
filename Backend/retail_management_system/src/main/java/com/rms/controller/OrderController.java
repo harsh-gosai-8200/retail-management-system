@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.rms.constants.Constants.*;
+
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -56,10 +58,10 @@ public class OrderController {
         Page<OrderResponseDTO> ordersPage = orderService.getSellerOrders(sellerId, status, pageable);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("orders", ordersPage.getContent());
-        response.put("currentPage", ordersPage.getNumber());
-        response.put("totalItems", ordersPage.getTotalElements());
-        response.put("totalPages", ordersPage.getTotalPages());
+        response.put(ORDERS, ordersPage.getContent());
+        response.put(CURRENT_PAGE, ordersPage.getNumber());
+        response.put(TOTAL_ITEMS, ordersPage.getTotalElements());
+        response.put(TOTAL_PAGES, ordersPage.getTotalPages());
 
         return ResponseEntity.ok(response);
     }

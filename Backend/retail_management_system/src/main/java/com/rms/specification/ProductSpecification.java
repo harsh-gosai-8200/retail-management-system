@@ -8,6 +8,8 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.rms.constants.Constants.*;
+
 public class ProductSpecification {
 
 
@@ -17,7 +19,7 @@ public class ProductSpecification {
     public static Specification<Product> byWholesalerId(Long wholesalerId) {
         return (root, query, cb) -> {
             if (wholesalerId == null) return cb.conjunction();
-            return cb.equal(root.get("wholesaler").get("id"), wholesalerId);
+            return cb.equal(root.get(WHOLESALER).get(ID), wholesalerId);
         };
     }
 
@@ -26,7 +28,7 @@ public class ProductSpecification {
      */
     public static Specification<Product> lowStock(int threshold) {
         return (root, query, cb) ->
-                cb.lessThanOrEqualTo(root.get("stockQuantity"), threshold);
+                cb.lessThanOrEqualTo(root.get(STOCK_QUENTITY), threshold);
     }
 
     /**
@@ -34,7 +36,7 @@ public class ProductSpecification {
      */
     public static Specification<Product> outOfStock() {
         return (root, query, cb) ->
-                cb.equal(root.get("stockQuantity"), 0);
+                cb.equal(root.get(STOCK_QUENTITY), 0);
     }
 
     /**
@@ -53,7 +55,7 @@ public class ProductSpecification {
             // Filter by wholesaler
             if (wholesalerId != null) {
                 predicates.add(criteriaBuilder.equal(
-                        root.get("wholesaler").get("id"), wholesalerId));
+                        root.get(WHOLESALER).get(ID), wholesalerId));
             }
 
 //            // Filter by category
@@ -65,7 +67,7 @@ public class ProductSpecification {
             // Filter by category case-insensitively
             if (StringUtils.hasText(category)) {
                 predicates.add(criteriaBuilder.equal(
-                        criteriaBuilder.lower(root.get("category")),
+                        criteriaBuilder.lower(root.get(CATEGORY)),
                         category.toLowerCase()
                 ));
             }
@@ -73,7 +75,7 @@ public class ProductSpecification {
             // Filter by active status (default to true if not specified)
             if (isActive != null) {
                 predicates.add(criteriaBuilder.equal(
-                        root.get("isActive"), isActive));
+                        root.get(IS_ACTIVE), isActive));
             }
 //            else {
 //                predicates.add(criteriaBuilder.isTrue(root.get("isActive")));
@@ -83,9 +85,9 @@ public class ProductSpecification {
             if (StringUtils.hasText(searchTerm)) {
                 String pattern = "%" + searchTerm.toLowerCase() + "%";
                 predicates.add(criteriaBuilder.or(
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), pattern),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), pattern),
-                        criteriaBuilder.like(criteriaBuilder.lower(root.get("skuCode")), pattern)
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get(NAME)), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get(DESCRIPTION)), pattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get(SKU_CODE)), pattern)
                 ));
             }
 
@@ -102,9 +104,9 @@ public class ProductSpecification {
 
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(criteriaBuilder.equal(
-                    root.get("wholesaler").get("id"), wholesalerId));
-            predicates.add(criteriaBuilder.isTrue(root.get("isActive")));
-            predicates.add(criteriaBuilder.isNotNull(root.get("category")));
+                    root.get(WHOLESALER).get(ID), wholesalerId));
+            predicates.add(criteriaBuilder.isTrue(root.get(IS_ACTIVE)));
+            predicates.add(criteriaBuilder.isNotNull(root.get(CATEGORY)));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

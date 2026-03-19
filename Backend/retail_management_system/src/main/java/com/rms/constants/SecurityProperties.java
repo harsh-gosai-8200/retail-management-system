@@ -1,0 +1,22 @@
+package com.rms.constants;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Component
+@ConfigurationProperties(prefix = "security")
+@Getter
+@Setter
+public class SecurityProperties {
+
+    private List<String> publicEndpoints = new ArrayList<>();
+    private List<String> wholesalerEndpoints = new ArrayList<>();
+    private List<String> sellerEndpoints = new ArrayList<>();
+    private List<String> salesmanEndpoints = new ArrayList<>();
+
+}

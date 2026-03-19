@@ -16,14 +16,16 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final String MESSAGE = "message";
+    private final String ERROR = "message";
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequestDTO request) {
         try {
             String message = authService.register(request);
-            return ResponseEntity.ok(Map.of("message", message));
+            return ResponseEntity.ok(Map.of(MESSAGE, message));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(ERROR, e.getMessage()));
         }
     }
 
@@ -33,7 +35,7 @@ public class AuthController {
             LoginResponceDTO response = authService.login(request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(ERROR, e.getMessage()));
         }
     }
 }

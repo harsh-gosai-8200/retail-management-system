@@ -9,8 +9,8 @@ import LandingPage from "./pages/LandingPage";
 import { LocalSellerLayout } from "./pages/localSeller/layout.tsx";
 //import { WholesalersPage } from "./pages/localSeller/WholesalersPage";
 import  {LocalSellerDashboard } from "./pages/localSeller/LocalSellerDashboard.tsx";
-import { WholesalersPage } from './pages/localSeller/WholesalersPage.tsx'
-import { WholesalerViews } from './pages/localSeller/wholesaler/WholesalerViews.tsx'
+import  {WholesalersPage}  from './pages/localSeller/WholesalersPage.tsx'
+import  {WholesalerProductViews}  from './pages/localSeller/wholesaler/WholesalerProductViews.tsx'
 
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -50,9 +50,11 @@ function App() {
         </Route>
 
 <Route path="/local-seller" element={<LocalSellerLayout />}>
+<Route index element={<Navigate to="dashboard" replace />} />
   <Route path="dashboard" element={<LocalSellerDashboard />} />
   <Route path="wholesalers" element={<WholesalersPage />} />
-  <Route path="wholesalers/:id" element={<WholesalerViews />} />
+  <Route path="wholesaler/:id" element={<WholesalerProductViews />} />
+  <Route path="/local-seller/products" element={<ProductsPage />} />
 </Route>
 
 </Route>

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { Store, Package, Clock3, TrendingUp } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Store, Package, AlertCircle, ArrowRight, Loader2, Clock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom"
 import { api } from "../../services/api";
-import { Loader2 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 type Tone = "blue" | "amber" | "green" | "red";
 
@@ -47,173 +48,192 @@ function StatCard({
 }
 
 export function LocalSellerDashboard() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const sellerId = user?.id;
+
   const [wholesalers, setWholesalers] = useState<any[]>([]);
-  const [loadingWholesalers, setLoadingWholesalers] = useState(false);
-  const [wholesalersError, setWholesalersError] = useState<string | null>(null);
-  const [subscribedWholesalers, setSubscribedWholesalers] = useState<any[]>([]);
-  const [loadingSubscribed, setLoadingSubscribed] = useState(false);
+  const [subscribed, setSubscribed] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    totalWholesalers: 0,
+    totalSubscribed: 0,
+    pendingSubscriptions: 0,
 
+  });
+
+  // Use useCallback to ensure stable function reference
+  const loadData = useCallback(async () => {
+    if (!sellerId) return;
+
+    try {
+
+      if (!user) return;
+      setLoading(true);
+      setError(null);
+
+      // Load all wholesalers
+      const allWholesalers = (await api.getWholesalers()) || [];
+      setWholesalers(allWholesalers);
+
+      // Load subscribed wholesalers safely
+      const subscribedRaw = await api.getSubscribedWholesalers(sellerId);
+
+     const subscribedWholesalers = subscribedRaw?.content || [];
+      setSubscribed(subscribedWholesalers);
+    
+      const pendingCount = subscribedWholesalers.filter(
+        (w: { status: string; }) => w.status?.toUpperCase() === "PENDING"
+      ).length;
+
+      const approvedCount = subscribedWholesalers.filter(
+        (w: { status: string; }) => w.status?.toUpperCase() === "APPROVED"
+      ).length;
+
+      setStats({
+        totalWholesalers: allWholesalers.length,
+        totalSubscribed: approvedCount,   
+        pendingSubscriptions: pendingCount,
+      });
+     
+    } catch (err: any) {
+      console.error("Subscription load failed:", err);
+      setError(err?.message || "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  }, [sellerId])
+
+  // Load data when user is ready
   useEffect(() => {
-    let active = true;
+    if (!sellerId) return;
+    loadData();
+  }, [sellerId, loadData]);
 
-    const loadWholesalers = async () => {
-      setLoadingWholesalers(true);
-      setWholesalersError(null);
+  // Reload on window focus (optional, prevents blank page on tab switch)
+  useEffect(() => {
+    const handleFocus = () => loadData();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [loadData]);
 
-      try {
-        const data = await api.getWholesalers();
-        if (!active) return;
-        setWholesalers(data || []);
-      } catch (error: any) {
-        if (!active) return;
-        setWholesalersError(error?.message ?? "Failed to load wholesalers.");
-      } finally {
-        if (active) setLoadingWholesalers(false);
-      }
-    };
+  const statCards = [
+    {
+      label: "Total Wholesalers",
+      value: stats.totalWholesalers,
+      icon: Store,
+      color: "bg-blue-50 text-blue-600",
+      helper: "Available to connect",
+    },
+    {
+      label: "Subscribed",
+      value: stats.totalSubscribed,
+      icon: Store,
+      color: "bg-green-50 text-green-600",
+      helper: "Active connections",
+    },
+    {
+      label: "Pending",
+      value: stats.pendingSubscriptions,
+      icon: Clock,
+      color: "bg-yellow-50 text-yellow-600",
+      helper: "Awaiting approval",
+    },
+    {
+      label: "Orders",
+      value: 0,
+      icon: Package,
+      color: "bg-purple-50 text-purple-600",
+      helper: "Coming soon",
+    },
+  ];
 
+  if (loading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
+      </div>
+    );
+  }
 
-    const loadSubscribedWholesalers = async () => {
-      try {
-        setLoadingSubscribed(true);
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 p-4 text-red-600">
+        <AlertCircle className="h-5 w-5" />
+        {error}
+      </div>
+    );
+  }
 
-        const sellerId = Number(localStorage.getItem("userId"));
-        const res = await api.getSubscribedWholesalers(sellerId);
-
-        if (!active) return;
-
-        setSubscribedWholesalers(res ?? []);
-      } catch (err) {
-        console.error("Failed to load subscribed wholesalers");
-      } finally {
-        if (active) setLoadingSubscribed(false);
-      }
-    };
-
-    loadWholesalers();
-    loadSubscribedWholesalers();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const totalWholesalers = wholesalers.length;
-  const totalSubscribed = subscribedWholesalers.length;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <header>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-          Dashboard
-        </h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Overview of your orders and wholesalers.
-        </p>
-      </header>
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+      <p>Welcome back, {user?.username || "Local Seller"}!</p>
 
-      {/* Stats Section */}
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total Wholesalers"
-          value={
-            loadingWholesalers
-              ? (
-                <Loader2 className="animate-spin h-5 w-5 text-blue-500" />
-              ) : wholesalersError ? "—" : totalWholesalers
-          }
-          helper={
-            wholesalersError
-              ? `Failed to load wholesalers: ${wholesalersError}`
-              : "Registered wholesalers available"
-          }
-          icon={<Store className="h-5 w-5" />}
-          tone="blue"
-        />
-        <StatCard
-          label="Subscribed Wholesalers"
-          value={
-            loadingSubscribed ? (
-              <Loader2 className="animate-spin h-5 w-5 text-blue-500" />
-            ) : totalSubscribed
-          }
-          helper="Wholesalers you are connected with"
-          icon={<Store className="h-5 w-5" />}
-          tone="green"
-        />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((card) => (
+          <div key={card.label} className="rounded-lg border bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-500">{card.label}</p>
+                <p className="mt-2 text-2xl font-bold text-slate-900">{card.value}</p>
+                <p className="mt-1 text-xs text-slate-400">{card.helper}</p>
+              </div>
+              <div className={`rounded-lg p-3 ${card.color}`}>
+                <card.icon className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
-        <StatCard
-          label="Total Orders"
-          value={8}
-          helper="Orders placed by you"
-          icon={<Package className="h-5 w-5" />}
-          tone="green"
-        />
+      <div className="grid gap-4 md:grid-cols-2">
+        <button
+          onClick={() => navigate("/local-seller/wholesalers")}
+          className="group rounded-lg border bg-white p-6 text-left shadow-sm hover:border-blue-300 hover:shadow-md"
+        >
+          <Store className="h-8 w-8 text-blue-600" />
+          <h3 className="mt-4 text-lg font-semibold text-slate-900">Browse Wholesalers</h3>
+          <p className="mt-1 text-sm text-slate-500">Discover and subscribe to wholesalers</p>
+          <ArrowRight className="mt-4 h-5 w-5 text-slate-400 group-hover:text-blue-600" />
+        </button>
 
-        <StatCard
-          label="Pending Orders"
-          value={3}
-          helper="Awaiting confirmation"
-          icon={<Clock3 className="h-5 w-5" />}
-          tone="amber"
-        />
+        <button
+          onClick={() => navigate("/local-seller/subscriptions")}
+          className="group rounded-lg border bg-white p-6 text-left shadow-sm hover:border-blue-300 hover:shadow-md"
+        >
+          <Package className="h-8 w-8 text-blue-600" />
+          <h3 className="mt-4 text-lg font-semibold text-slate-900">My Subscriptions</h3>
+          <p className="mt-1 text-sm text-slate-500">View your subscribed wholesalers</p>
+          <ArrowRight className="mt-4 h-5 w-5 text-slate-400 group-hover:text-blue-600" />
+        </button>
+      </div>
 
-        <StatCard
-          label="Total Spending"
-          value="₹25,000"
-          helper="Overall purchase value"
-          icon={<TrendingUp className="h-5 w-5" />}
-          tone="red"
-        />
-      </section>
-
-      {/* Wholesaler Preview */}
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-900">
-          Available Wholesalers
-        </h2>
-
-        {loadingWholesalers ? (
-          <p className="mt-2 text-sm text-slate-500">Loading wholesalers...</p>
-        ) : wholesalersError ? (
-          <p className="mt-2 text-sm text-red-500">{wholesalersError}</p>
-        ) : wholesalers.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500">No wholesalers found.</p>
-        ) : (
-          <ul className="mt-3 space-y-2">
-            {wholesalers.slice(0, 5).map((w: any, idx: number) => (
-              <li
-                key={w.id ?? w.email ?? w.shopName ?? w.businessName ?? idx}
-                className="rounded-md bg-slate-50 p-3"
+      <div className="rounded-lg border bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">Recent Wholesalers</h2>
+        <div className="mt-4 space-y-3">
+          {wholesalers.slice(0, 3).map((w) => (
+            <div
+              key={w.id}
+              className="flex items-center justify-between rounded-lg border p-3 hover:bg-slate-50"
+            >
+              <div>
+                <p className="font-medium text-slate-900">{w.businessName || w.name}</p>
+                <p className="text-xs text-slate-500">{w.email}</p>
+              </div>
+              <Link
+                to={`/local-seller/wholesalers`}
+                className="text-blue-600 text-sm font-medium hover:underline"
               >
-                <p className="text-sm font-medium text-slate-900">
-                  {w.name ||
-                    w.businessName ||
-                    w.shopName ||
-                    `Wholesaler #${w.id}`}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {w.email || w.location || ""}
-                </p>
-              </li>
-            ))}
-            {wholesalers.length > 5 && (
-              <li className="text-xs text-slate-500">
-                +{wholesalers.length - 5} more wholesalers
-              </li>
-            )}
-          </ul>
-        )}
-      </section>
-
-      {/* Placeholder Section */}
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-900">Recent Orders</h2>
-        <p className="mt-2 text-sm text-slate-500">
-          Order history will appear here once implemented.
-        </p>
-      </section>
+                View wholesaler
+              </Link>
+            </div>
+          ))}
+          {wholesalers.length === 0 && <p className="text-sm text-slate-500">No wholesalers available</p>}
+        </div>
+      </div>
     </div>
   );
 }

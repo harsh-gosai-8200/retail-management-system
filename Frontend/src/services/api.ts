@@ -41,6 +41,7 @@ export interface Wholesaler {
   id: number;
   username: string;
   businessName: string;
+ 
 }
 
 export interface Product {
@@ -336,8 +337,8 @@ class ApiService {
 
   async getSubscribedWholesalers(
     sellerId: number
-  ): Promise<Wholesaler []> {
-    return this.request<Wholesaler []>(
+  ): Promise<any> {
+    return this.request(
       `/local-seller/${sellerId}/subscribed-wholesalers`
     );
   }
@@ -361,6 +362,33 @@ class ApiService {
       { method: "DELETE" },
     );
   }
+
+  // GET SUBSCRIPTION STATUS
+  async getSubscriptionStatus(
+  localSellerId: number,
+  wholesalerId: number
+): Promise<any> {
+  return this.request<any>(
+    `/subscriptions/status?localSellerId=${localSellerId}&wholesalerId=${wholesalerId}`
+  );
+}
+
+// cancel subscriiption
+async cancelSubscription(
+  localSellerId: number,
+  wholesalerId: number
+): Promise<void> {
+  return this.request(
+    `/subscriptions/seller/${localSellerId}/cancel/${wholesalerId}`,
+    { method: "DELETE" }
+  );
+}
+
+async getAllProductsForSeller(): Promise<Product[]> {
+  return this.request(`/local-seller/products`);
+}
+
+
 
 }
 

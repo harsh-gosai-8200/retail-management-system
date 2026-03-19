@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.rms.constants.Messages.*;
+
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
@@ -21,7 +23,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
-                "Resource Not Found",
+                RESOURCE_NOT_FOUND,
                 ex.getMessage()
         );
         log.error("Resource not found: {}", ex.getMessage());
@@ -33,7 +35,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
-                "Invalid Request",
+                INVALID_REQUEST,
                 ex.getMessage()
         );
         log.error("Invalid argument: {}", ex.getMessage());
@@ -57,8 +59,8 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "An unexpected error occurred"
+                INTERNAL_SERVER_ERROR_,
+                UNEXPECTED_ERROR
         );
         log.error("Unexpected error: ", ex);
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);

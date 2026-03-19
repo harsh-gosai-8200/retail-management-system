@@ -6,7 +6,6 @@ import com.rms.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -17,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.rms.constants.Constants.*;
+import static com.rms.constants.Messages.PRODUCT_REMOVE_SUCCESSFULLY;
 
 @RestController
 @RequestMapping("/api/products")
@@ -47,12 +49,12 @@ public class ProductController {
                 wholesalerId, category, search, active, pageable);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("products", productsPage.getContent());
-        response.put("currentPage", productsPage.getNumber());
-        response.put("totalItems", productsPage.getTotalElements());
-        response.put("totalPages", productsPage.getTotalPages());
-        response.put("pageSize", productsPage.getSize());
-        response.put("sort", productsPage.getSort().toString());
+        response.put(PRODUCTS, productsPage.getContent());
+        response.put(CURRENT_PAGE, productsPage.getNumber());
+        response.put(TOTAL_ITEMS, productsPage.getTotalElements());
+        response.put(TOTAL_PAGES, productsPage.getTotalPages());
+        response.put(PAGE_SIZE, productsPage.getSize());
+        response.put(SORT, productsPage.getSort().toString());
 
         return ResponseEntity.ok(response);
     }
@@ -133,11 +135,11 @@ public class ProductController {
      * @return
      */
     @DeleteMapping("/{productId}")
-    public ResponseEntity<Void> deleteProduct(
+    public ResponseEntity<?> deleteProduct(
             @PathVariable Long productId) {
 
         productService.deleteProduct(productId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of(MESSAGE,PRODUCT_REMOVE_SUCCESSFULLY));
     }
 
     /**

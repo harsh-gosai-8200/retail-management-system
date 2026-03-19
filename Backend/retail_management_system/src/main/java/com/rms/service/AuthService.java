@@ -1,5 +1,6 @@
 package com.rms.service;
 
+import com.rms.constants.JwtProperties;
 import com.rms.dto.LoginRequestDTO;
 import com.rms.dto.LoginResponceDTO;
 import com.rms.dto.RegisterRequestDTO;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import static com.rms.constants.Messages.*;
 
 @Service
 @RequiredArgsConstructor
@@ -25,13 +27,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final JwtProperties jwtProperties;
 
     @Transactional
     public String register(RegisterRequestDTO request) {
 
         // 1. Check if email exists
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw new RuntimeException(EMAIL_ALREADY_EXIST);
         }
 
         // 2. Create user - using username from request
@@ -66,7 +69,7 @@ public class AuthService {
         } else if (request.getRole() == Role.SALESMAN) {
             // Validate wholesaler exists
             Wholesaler wholesaler = wholesalerRepository.findById(request.getWholesalerId())
-                    .orElseThrow(() -> new RuntimeException("Wholesaler not found with id: " + request.getWholesalerId()));
+                    .orElseThrow(() -> new RuntimeException(WHOLESALER_NOT_FOUND + request.getWholesalerId()));
 
             Salesman salesman = new Salesman();
             salesman.setUser(savedUser);
@@ -75,7 +78,7 @@ public class AuthService {
             salesmanRepository.save(salesman);
         }
 
-        return "Registration successful for " + request.getUsername();
+        return REGISTRATION_SUCCESSFUL + request.getUsername();
     }
 
     public LoginResponceDTO login(LoginRequestDTO request) {
@@ -87,7 +90,7 @@ public class AuthService {
 
         // 2. Get user
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + request.getEmail()));
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_WITH_EMAIL + request.getEmail()));
 
         // 3. Generate token
         String token = jwtUtil.generateToken(
@@ -104,24 +107,30 @@ public class AuthService {
             Wholesaler wholesaler = wholesalerRepository.findByUserId(user.getId())
                     .orElse(null);
             if (wholesaler != null) {
-                roleId = wholesaler.getId();           // ✅ This is what you need for products
+                roleId = wholesaler.getId();
                 businessName = wholesaler.getBusinessName();
             }
         } else if (user.getRole() == Role.LOCAL_SELLER) {
             LocalSeller seller = localSellerRepository.findByUserId(user.getId())
                     .orElse(null);
             if (seller != null) {
-                roleId = seller.getId();               // ✅ This is what you need for orders/cart
+                roleId = seller.getId();
                 shopName = seller.getShopName();
+            }
+        }else if (user.getRole() == Role.SALESMAN) {
+            Salesman salesman = salesmanRepository.findByUserId(user.getId())
+                    .orElse(null);
+            if (salesman != null) {
+                roleId = salesman.getId();
             }
         }
 
         // 4. Return response with username
         return LoginResponceDTO.builder()
                 .token(token)
-                .tokenType("Bearer")
+                .tokenType(jwtProperties.getTokenPrefix())
                 .userId(user.getId())
-                .roleId(roleId)                          // ✅ Send this to frontend
+                .roleId(roleId)
                 .role(user.getRole().name())
                 .email(user.getEmail())
                 .username(user.getUsername())

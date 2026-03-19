@@ -1,5 +1,6 @@
 package com.rms.security;
 
+import com.rms.constants.JwtProperties;
 import com.rms.utils.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -20,16 +21,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
+    private final JwtProperties jwtProperties;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
+        String authHeader = request.getHeader(jwtProperties.getHeaderName());
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+        if (authHeader != null && authHeader.startsWith(jwtProperties.getTokenPrefix()+" ")) {
+            String token = authHeader.substring(jwtProperties.getTokenPrefix().length()+1);
 
             try {
                 String email = jwtUtil.extractEmail(token);

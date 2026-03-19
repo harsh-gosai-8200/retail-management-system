@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.rms.constants.Constants.*;
+import static com.rms.constants.Messages.CART_CLEARE_SUCCESSFULLY;
+import static com.rms.constants.Messages.CART_ITEM_REMOVE_SUCCESSFULLY;
+
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
@@ -74,12 +78,12 @@ public class CartController {
      * @return
      */
     @DeleteMapping("/items/{cartItemId}")
-    public ResponseEntity<Void> removeFromCart(
+    public ResponseEntity<?> removeFromCart(
             @RequestParam Long sellerId,
             @PathVariable Long cartItemId) {
 
         cartService.removeFromCart(sellerId, cartItemId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of(MESSAGE, CART_ITEM_REMOVE_SUCCESSFULLY));
     }
 
     /**
@@ -92,7 +96,7 @@ public class CartController {
         cartService.clearCart(sellerId);
 
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Cart cleared successfully");
+        response.put(MESSAGE, CART_CLEARE_SUCCESSFULLY);
         return ResponseEntity.ok(response);
     }
 
@@ -106,7 +110,7 @@ public class CartController {
         Long count = cartService.getCartItemCount(sellerId);
 
         Map<String, Long> response = new HashMap<>();
-        response.put("count", count);
+        response.put(COUNT, count);
         return ResponseEntity.ok(response);
     }
 }

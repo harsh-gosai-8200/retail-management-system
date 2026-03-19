@@ -11,11 +11,9 @@ import com.rms.model.Product;
 import com.rms.repository.CartItemRepository;
 import com.rms.repository.LocalSellerRepository;
 import com.rms.repository.ProductRepository;
-import com.rms.repository.WholesalerRepository;
 import com.rms.specification.CartItemSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.rms.constants.Messages.*;
 
 @Service
 @RequiredArgsConstructor
@@ -51,14 +51,14 @@ public class CartService {
         LocalSeller seller = localSellerRepository.findByUserId(sellerId)
                 .orElseGet(() -> localSellerRepository.findById(sellerId)
                         .orElseThrow(() -> new ResourceNotFoundException(
-                                "Seller not found with ID: " + sellerId
+                                SELLER_NOT_FOUND + sellerId
                         )));
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(PRODUCT_NOT_FOUND));
 
         if (product.getStockQuantity() < request.getQuantity()) {
-            throw new RuntimeException("Insufficient stock. Available: " + product.getStockQuantity());
+            throw new RuntimeException(INSUFFICIENT_STOCK + product.getStockQuantity());
         }
 
         Specification<CartItem> spec = Specification
@@ -70,7 +70,7 @@ public class CartService {
         if (cartItem.getId() != null) {
             int newQuantity = cartItem.getQuantity() + request.getQuantity();
             if (newQuantity > product.getStockQuantity()) {
-                throw new RuntimeException("Cannot add more. Max available: " + product.getStockQuantity());
+                throw new RuntimeException(CANNOT_ADD_MORE_ITEM + product.getStockQuantity());
             }
             cartItem.setQuantity(newQuantity);
             cartItem.setTotal(product.getPrice().multiply(BigDecimal.valueOf(newQuantity)));
@@ -97,7 +97,7 @@ public class CartService {
         LocalSeller seller = localSellerRepository.findByUserId(sellerId)
                 .orElseGet(() -> localSellerRepository.findById(sellerId)
                         .orElseThrow(() -> new ResourceNotFoundException(
-                                "Seller not found with ID: " + sellerId
+                                SELLER_NOT_FOUND + sellerId
                         )));
 
         Specification<CartItem> spec = CartItemSpecification.bySellerId(seller.getId());
@@ -158,10 +158,10 @@ public class CartService {
                 .and((root, query, cb) -> cb.equal(root.get("id"), cartItemId));
 
         CartItem cartItem = cartItemRepository.findOne(spec)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CART_ITEM_NOT_FOUND));
 
         if (cartItem.getProduct().getStockQuantity() < quantity) {
-            throw new RuntimeException("Insufficient stock. Available: " + cartItem.getProduct().getStockQuantity());
+            throw new RuntimeException(INSUFFICIENT_STOCK + cartItem.getProduct().getStockQuantity());
         }
 
         if (quantity <= 0) {
@@ -188,7 +188,7 @@ public class CartService {
                 .and((root, query, cb) -> cb.equal(root.get("id"), cartItemId));
 
         CartItem cartItem = cartItemRepository.findOne(spec)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(CART_ITEM_NOT_FOUND));
 
         cartItemRepository.delete(cartItem);
     }
@@ -205,7 +205,7 @@ public class CartService {
                     // Try finding by direct ID
                     return localSellerRepository.findById(sellerId)
                             .orElseThrow(() -> new ResourceNotFoundException(
-                                    "Seller not found with ID: " + sellerId
+                                    SELLER_NOT_FOUND + sellerId
                             ));
                 });
 
@@ -224,7 +224,7 @@ public class CartService {
                     // Try finding by direct ID
                     return localSellerRepository.findById(sellerId)
                             .orElseThrow(() -> new ResourceNotFoundException(
-                                    "Seller not found with ID: " + sellerId
+                                    SELLER_NOT_FOUND + sellerId
                             ));
                 });
 

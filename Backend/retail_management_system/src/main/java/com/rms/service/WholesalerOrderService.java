@@ -26,6 +26,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.rms.constants.Constants.*;
+import static com.rms.constants.Messages.*;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -50,7 +53,7 @@ public class WholesalerOrderService {
 
         Wholesaler wholesaler = wholesalerRepository.findById(wholesalerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Wholesaler not found with ID: " + wholesalerId
+                        WHOLESALER_NOT_FOUND + wholesalerId
                 ));
 
         Specification<Order> spec = Specification.where(OrderSpecification.byWholesalerId(wholesaler.getId()));
@@ -82,7 +85,7 @@ public class WholesalerOrderService {
      * @return
      */
     public Page<OrderResponseDTO> getPendingOrders(Long wholesalerId, Pageable pageable) {
-        return getOrders(wholesalerId, "PENDING", pageable);
+        return getOrders(wholesalerId, String.valueOf(OrderStatus.PENDING), pageable);
     }
 
 
@@ -97,16 +100,16 @@ public class WholesalerOrderService {
 
         Wholesaler wholesaler = wholesalerRepository.findById(wholesalerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Wholesaler not found with ID: " + wholesalerId
+                        WHOLESALER_NOT_FOUND + wholesalerId
                 ));
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Order not found with ID: " + orderId
+                        ORDER_NOT_FOUND + orderId
                 ));
 
         if (!order.getWholesaler().getId().equals(wholesaler.getId())) {
-            throw new ResourceNotFoundException("Order does not belong to this wholesaler");
+            throw new ResourceNotFoundException(ORDER_NOT_BELONG_TO_WHOLESALER);
         }
 
         List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
@@ -128,21 +131,21 @@ public class WholesalerOrderService {
 
         Wholesaler wholesaler = wholesalerRepository.findById(wholesalerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Wholesaler not found with ID: " + wholesalerId
+                        WHOLESALER_NOT_FOUND + wholesalerId
                 ));
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Order not found with ID: " + orderId
+                        ORDER_NOT_FOUND + orderId
                 ));
 
         if (!order.getWholesaler().getId().equals(wholesaler.getId())) {
-            throw new ResourceNotFoundException("Order does not belong to this wholesaler");
+            throw new ResourceNotFoundException(ORDER_NOT_BELONG_TO_WHOLESALER);
         }
 
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException(
-                    "Only pending orders can be approved. Current status: " + order.getStatus()
+                    ONLY_PENDING_ORDERS_CAN_APPROVE + order.getStatus()
             );
         }
 
@@ -159,7 +162,7 @@ public class WholesalerOrderService {
                 .status(savedOrder.getStatus().toString())
                 .approvedAt(savedOrder.getApprovedAt())
                 .approvedBy(wholesaler.getBusinessName())
-                .message("Order approved successfully")
+                .message(ORDER_APPROVED)
                 .build();
     }
 
@@ -177,21 +180,21 @@ public class WholesalerOrderService {
 
         Wholesaler wholesaler = wholesalerRepository.findById(wholesalerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Wholesaler not found with ID: " + wholesalerId
+                        WHOLESALER_NOT_FOUND + wholesalerId
                 ));
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Order not found with ID: " + orderId
+                        ORDER_NOT_FOUND + orderId
                 ));
 
         if (!order.getWholesaler().getId().equals(wholesaler.getId())) {
-            throw new ResourceNotFoundException("Order does not belong to this wholesaler");
+            throw new ResourceNotFoundException(ORDER_NOT_BELONG_TO_WHOLESALER);
         }
 
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException(
-                    "Only pending orders can be rejected. Current status: " + order.getStatus()
+                    ONLY_PENDING_ORDERS_CAN_REJECT + order.getStatus()
             );
         }
 
@@ -231,23 +234,23 @@ public class WholesalerOrderService {
 
         Wholesaler wholesaler = wholesalerRepository.findById(wholesalerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Wholesaler not found with ID: " + wholesalerId
+                        WHOLESALER_NOT_FOUND + wholesalerId
                 ));
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Order not found with ID: " + orderId
+                        ORDER_NOT_FOUND + orderId
                 ));
 
         if (!order.getWholesaler().getId().equals(wholesaler.getId())) {
-            throw new ResourceNotFoundException("Order does not belong to this wholesaler");
+            throw new ResourceNotFoundException(ORDER_NOT_BELONG_TO_WHOLESALER);
         }
 
         OrderStatus status;
         try {
             status = OrderStatus.valueOf(statusUpdate.getStatus().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid status: " + statusUpdate.getStatus());
+            throw new IllegalArgumentException(INVALID_STATUS + statusUpdate.getStatus());
         }
 
         // Check valid status transitions
@@ -291,7 +294,7 @@ public class WholesalerOrderService {
 
         Wholesaler wholesaler = wholesalerRepository.findById(wholesalerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Wholesaler not found with ID: " + wholesalerId
+                        WHOLESALER_NOT_FOUND + wholesalerId
                 ));
 
         Specification<Order> baseSpec = OrderSpecification.byWholesalerId(wholesaler.getId());
@@ -361,11 +364,11 @@ public class WholesalerOrderService {
 
         // Prepare chart data
         Map<String, Long> ordersByStatusChart = new LinkedHashMap<>();
-        ordersByStatusChart.put("PENDING", pendingOrders);
-        ordersByStatusChart.put("APPROVED", approvedOrders);
-        ordersByStatusChart.put("PROCESSING", processingOrders);
-        ordersByStatusChart.put("SHIPPED", shippedOrders);
-        ordersByStatusChart.put("DELIVERED", deliveredOrders);
+        ordersByStatusChart.put(String.valueOf(OrderStatus.PENDING), pendingOrders);
+        ordersByStatusChart.put(String.valueOf(OrderStatus.APPROVED), approvedOrders);
+        ordersByStatusChart.put(String.valueOf(OrderStatus.PROCESSING), processingOrders);
+        ordersByStatusChart.put(String.valueOf(OrderStatus.SHIPPED), shippedOrders);
+        ordersByStatusChart.put(String.valueOf(OrderStatus.DELIVERED), deliveredOrders);
 
         // Revenue by day for last 7 days
         Map<String, BigDecimal> revenueByDay = getRevenueByDay(wholesaler.getId(), 7);
@@ -407,11 +410,11 @@ public class WholesalerOrderService {
 
         Wholesaler wholesaler = wholesalerRepository.findById(wholesalerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Wholesaler not found with ID: " + wholesalerId
+                        WHOLESALER_NOT_FOUND + wholesalerId
                 ));
 
         Specification<Order> spec = OrderSpecification.byWholesalerId(wholesaler.getId());
-        Pageable topN = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable topN = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, CREATED_AT));
 
         Page<Order> orders = orderRepository.findAll(spec, topN);
 
@@ -547,7 +550,7 @@ public class WholesalerOrderService {
      */
     private List<OrderPreviewDTO> getRecentOrdersPreview(Long wholesalerId, int limit) {
         Specification<Order> spec = OrderSpecification.byWholesalerId(wholesalerId);
-        Pageable topN = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable topN = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, CREATED_AT));
 
         return orderRepository.findAll(spec, topN).stream()
                 .map(order -> OrderPreviewDTO.builder()

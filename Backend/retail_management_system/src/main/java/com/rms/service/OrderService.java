@@ -9,7 +9,6 @@ import com.rms.repository.*;
 import com.rms.specification.OrderSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +24,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.rms.constants.Constants.*;
+import static com.rms.constants.Messages.*;
 
 @Service
 @RequiredArgsConstructor
@@ -55,12 +57,12 @@ public class OrderService {
         // Get seller
         LocalSeller seller = localSellerRepository.findById(request.getSellerId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Seller not found with ID: " + request.getSellerId()
+                        SELLER_NOT_FOUND + request.getSellerId()
                 ));
 
         // Get wholesaler
         Wholesaler wholesaler = wholesalerRepository.findById(request.getWholesalerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Wholesaler not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(WHOLESALER_NOT_FOUND + request.getWholesalerId()));
 
         // Create order items
         List<OrderItem> orderItems = request.getItems().stream()
@@ -142,7 +144,7 @@ public class OrderService {
     public Page<OrderResponseDTO> getSellerOrders(Long sellerId, String status, Pageable pageable) {
         LocalSeller seller = localSellerRepository.findById(sellerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Seller not found with ID: " + sellerId
+                        SELLER_NOT_FOUND + sellerId
                 ));
 
         Specification<Order> spec = Specification.where(OrderSpecification.bySellerId(seller.getId()));
@@ -170,19 +172,19 @@ public class OrderService {
         log.info("Getting order {} for seller {}", orderId, sellerId);
         LocalSeller seller = localSellerRepository.findById(sellerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Seller not found with ID: " + sellerId
+                        SELLER_NOT_FOUND + sellerId
                 ));
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Order not found with ID: " + orderId
+                        ORDER_NOT_FOUND + orderId
                 ));
 
         if (!order.getSeller().getId().equals(seller.getId())) {
             log.error("Order {} belongs to seller {}, not seller {}",
                     orderId, order.getSeller().getId(), sellerId);
             throw new ResourceNotFoundException(
-                    "Order not found for seller: " + sellerId
+                    ORDER_NOT_FOUND_FOR_SELLER + sellerId
             );
         }
         return mapToDTO(order);
@@ -200,20 +202,20 @@ public class OrderService {
 
         LocalSeller seller = localSellerRepository.findById(sellerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Seller not found with ID: " + sellerId
+                        SELLER_NOT_FOUND + sellerId
                 ));
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Order not found with ID: " + orderId
+                        ORDER_NOT_FOUND + orderId
                 ));
 
         if (!order.getSeller().getId().equals(seller.getId())) {
-            throw new ResourceNotFoundException("Order does not belong to this seller");
+            throw new ResourceNotFoundException(ORDER_NOT_BELONG_TO_SELLER);
         }
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("Only pending orders can be cancelled");
+            throw new RuntimeException(ONLY_PENDING_ORDERS_CAN_CANCELED);
         }
 
         // Restore stock
@@ -237,7 +239,7 @@ public class OrderService {
     public OrderSummaryDTO getOrderSummary(Long sellerId) {
         LocalSeller seller = localSellerRepository.findById(sellerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Seller not found with ID: " + sellerId
+                        SELLER_NOT_FOUND + sellerId
                 ));
 
         long totalOrders = orderRepository.count(OrderSpecification.bySellerId(seller.getId()));
@@ -275,7 +277,7 @@ public class OrderService {
 
         LocalSeller seller = localSellerRepository.findById(sellerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Seller not found with ID: " + sellerId
+                        SELLER_NOT_FOUND + sellerId
                 ));
         // Use Specification to get recent orders
         Specification<Order> spec = OrderSpecification.bySellerId(seller.getId());
@@ -299,14 +301,14 @@ public class OrderService {
      */
     private OrderItem createOrderItem(OrderItemRequestDTO itemRequest, Wholesaler wholesaler) {
         Product product = productRepository.findById(itemRequest.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(PRODUCT_NOT_FOUND));
 
         if (!product.getWholesaler().getId().equals(wholesaler.getId())) {
-            throw new RuntimeException("Product does not belong to this wholesaler");
+            throw new RuntimeException(PRODUCT_NOT_BELONG_TO_WHOLESALER);
         }
 
         if (product.getStockQuantity() < itemRequest.getQuantity()) {
-            throw new RuntimeException("Insufficient stock for " + product.getName());
+            throw new RuntimeException(INSUFFICIEND_STOCK + product.getName());
         }
 
         OrderItem item = new OrderItem();
@@ -326,7 +328,7 @@ public class OrderService {
      * @return
      */
     private String generateOrderNumber() {
-        String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_PATTERN));
         long count = orderRepository.count() + 1;
         String sequencePart = String.format("%05d", count);
         return "ORD-" + datePart + "-" + sequencePart;

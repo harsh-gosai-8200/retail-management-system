@@ -1,6 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
-import { Store, Package, AlertCircle, ArrowRight, Loader2, Clock } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom"
+import {
+  Store,
+  Package,
+  AlertCircle,
+  ArrowRight,
+  Loader2,
+  Clock,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
@@ -56,19 +63,21 @@ export function LocalSellerDashboard() {
   const [subscribed, setSubscribed] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<string[]>([]);
   const [stats, setStats] = useState({
     totalWholesalers: 0,
     totalSubscribed: 0,
     pendingSubscriptions: 0,
-
   });
+  const [lastSubscriptionStatus, setLastSubscriptionStatus] = useState<
+    Record<number, string>
+  >({});
 
   // Use useCallback to ensure stable function reference
   const loadData = useCallback(async () => {
     if (!sellerId) return;
 
     try {
-
       if (!user) return;
       setLoading(true);
       setError(null);
@@ -80,30 +89,61 @@ export function LocalSellerDashboard() {
       // Load subscribed wholesalers safely
       const subscribedRaw = await api.getSubscribedWholesalers(sellerId);
 
-     const subscribedWholesalers = subscribedRaw?.content || [];
+      const subscribedWholesalers = subscribedRaw?.content || [];
       setSubscribed(subscribedWholesalers);
-    
+
       const pendingCount = subscribedWholesalers.filter(
-        (w: { status: string; }) => w.status?.toUpperCase() === "PENDING"
+        (w: { status: string }) => w.status?.toUpperCase() === "PENDING",
       ).length;
 
       const approvedCount = subscribedWholesalers.filter(
-        (w: { status: string; }) => w.status?.toUpperCase() === "APPROVED"
+        (w: { status: string }) => w.status?.toUpperCase() === "APPROVED",
       ).length;
+
+      const statusMap: Record<number, string> = {};
+      subscribedWholesalers.forEach((w: any) => {
+        statusMap[w.wholesalerId] = w.status;
+      });
+
+      if (Object.keys(lastSubscriptionStatus).length > 0) {
+        const updates: string[] = [];
+
+        subscribedWholesalers.forEach((w: any) => {
+          const previous = lastSubscriptionStatus[w.wholesalerId];
+          const current = w.status;
+
+          if (previous === "PENDING" && current === "APPROVED") {
+            updates.push(
+              `Subscription approved for wholesaler ${w.wholesalerName || w.wholesalerId}`,
+            );
+          }
+
+          if (previous === "PENDING" && current === "REJECTED") {
+            updates.push(
+              `Subscription rejected for wholesaler ${w.wholesalerName || w.wholesalerId}`,
+            );
+          }
+        });
+
+        if (updates.length > 0) {
+          setNotifications((prev) => [...updates, ...prev]);
+        }
+      }
+
+      setLastSubscriptionStatus(statusMap);
 
       setStats({
         totalWholesalers: allWholesalers.length,
-        totalSubscribed: approvedCount,   
+        totalSubscribed: approvedCount,
         pendingSubscriptions: pendingCount,
       });
-     
     } catch (err: any) {
       console.error("Subscription load failed:", err);
       setError(err?.message || "Failed to load data");
     } finally {
       setLoading(false);
     }
-  }, [sellerId])
+  }, [sellerId]);
 
   // Load data when user is ready
   useEffect(() => {
@@ -117,6 +157,16 @@ export function LocalSellerDashboard() {
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
   }, [loadData]);
+
+  // Poll subscription status every 30s
+  useEffect(() => {
+    if (!sellerId) return;
+    const interval = setInterval(() => {
+      loadData();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [sellerId, loadData]);
 
   const statCards = [
     {
@@ -166,19 +216,36 @@ export function LocalSellerDashboard() {
     );
   }
 
-
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
       <p>Welcome back, {user?.username || "Local Seller"}!</p>
 
+      {notifications.length > 0 && (
+        <div className="space-y-2">
+          {notifications.map((note, index) => (
+            <div
+              key={index}
+              className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700"
+            >
+              {note}
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card) => (
-          <div key={card.label} className="rounded-lg border bg-white p-6 shadow-sm">
+          <div
+            key={card.label}
+            className="rounded-lg border bg-white p-6 shadow-sm"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-500">{card.label}</p>
-                <p className="mt-2 text-2xl font-bold text-slate-900">{card.value}</p>
+                <p className="mt-2 text-2xl font-bold text-slate-900">
+                  {card.value}
+                </p>
                 <p className="mt-1 text-xs text-slate-400">{card.helper}</p>
               </div>
               <div className={`rounded-lg p-3 ${card.color}`}>
@@ -195,8 +262,12 @@ export function LocalSellerDashboard() {
           className="group rounded-lg border bg-white p-6 text-left shadow-sm hover:border-blue-300 hover:shadow-md"
         >
           <Store className="h-8 w-8 text-blue-600" />
-          <h3 className="mt-4 text-lg font-semibold text-slate-900">Browse Wholesalers</h3>
-          <p className="mt-1 text-sm text-slate-500">Discover and subscribe to wholesalers</p>
+          <h3 className="mt-4 text-lg font-semibold text-slate-900">
+            Browse Wholesalers
+          </h3>
+          <p className="mt-1 text-sm text-slate-500">
+            Discover and subscribe to wholesalers
+          </p>
           <ArrowRight className="mt-4 h-5 w-5 text-slate-400 group-hover:text-blue-600" />
         </button>
 
@@ -205,14 +276,20 @@ export function LocalSellerDashboard() {
           className="group rounded-lg border bg-white p-6 text-left shadow-sm hover:border-blue-300 hover:shadow-md"
         >
           <Package className="h-8 w-8 text-blue-600" />
-          <h3 className="mt-4 text-lg font-semibold text-slate-900">My Subscriptions</h3>
-          <p className="mt-1 text-sm text-slate-500">View your subscribed wholesalers</p>
+          <h3 className="mt-4 text-lg font-semibold text-slate-900">
+            My Subscriptions
+          </h3>
+          <p className="mt-1 text-sm text-slate-500">
+            View your subscribed wholesalers
+          </p>
           <ArrowRight className="mt-4 h-5 w-5 text-slate-400 group-hover:text-blue-600" />
         </button>
       </div>
 
       <div className="rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Recent Wholesalers</h2>
+        <h2 className="text-lg font-semibold text-slate-900">
+          Recent Wholesalers
+        </h2>
         <div className="mt-4 space-y-3">
           {wholesalers.slice(0, 3).map((w) => (
             <div
@@ -220,7 +297,9 @@ export function LocalSellerDashboard() {
               className="flex items-center justify-between rounded-lg border p-3 hover:bg-slate-50"
             >
               <div>
-                <p className="font-medium text-slate-900">{w.businessName || w.name}</p>
+                <p className="font-medium text-slate-900">
+                  {w.businessName || w.name}
+                </p>
                 <p className="text-xs text-slate-500">{w.email}</p>
               </div>
               <Link
@@ -231,7 +310,9 @@ export function LocalSellerDashboard() {
               </Link>
             </div>
           ))}
-          {wholesalers.length === 0 && <p className="text-sm text-slate-500">No wholesalers available</p>}
+          {wholesalers.length === 0 && (
+            <p className="text-sm text-slate-500">No wholesalers available</p>
+          )}
         </div>
       </div>
     </div>

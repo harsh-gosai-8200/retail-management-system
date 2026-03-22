@@ -41,7 +41,6 @@ export interface Wholesaler {
   id: number;
   username: string;
   businessName: string;
- 
 }
 
 export interface Product {
@@ -75,6 +74,19 @@ export interface SpringPage<T> {
   size: number;
   number: number;
   empty: boolean;
+}
+
+export interface SubscriptionDTO {
+  id: number;
+  localSellerId: number;
+  localSellerName: string;
+  localSellerShop: string;
+  wholesalerId: number;
+  wholesalerName: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  message?: string;
 }
 
 class ApiService {
@@ -336,10 +348,12 @@ class ApiService {
   }
 
   async getSubscribedWholesalers(
-    sellerId: number
+    sellerId: number,
+    page = 0,
+    size = 10,
   ): Promise<any> {
     return this.request(
-      `/local-seller/${sellerId}/subscribed-wholesalers`
+      `/local-seller/${sellerId}/subscribed-wholesalers?page=${page}&size=${size}`,
     );
   }
 
@@ -365,31 +379,56 @@ class ApiService {
 
   // GET SUBSCRIPTION STATUS
   async getSubscriptionStatus(
-  localSellerId: number,
-  wholesalerId: number
-): Promise<any> {
-  return this.request<any>(
-    `/subscriptions/status?localSellerId=${localSellerId}&wholesalerId=${wholesalerId}`
-  );
-}
+    localSellerId: number,
+    wholesalerId: number,
+  ): Promise<any> {
+    return this.request<any>(
+      `/subscriptions/status?localSellerId=${localSellerId}&wholesalerId=${wholesalerId}`,
+    );
+  }
 
-// cancel subscriiption
-async cancelSubscription(
-  localSellerId: number,
-  wholesalerId: number
-): Promise<void> {
-  return this.request(
-    `/subscriptions/seller/${localSellerId}/cancel/${wholesalerId}`,
-    { method: "DELETE" }
-  );
-}
+  // cancel subscriiption
+  async cancelSubscription(
+    localSellerId: number,
+    wholesalerId: number,
+  ): Promise<void> {
+    return this.request(
+      `/subscriptions/seller/${localSellerId}/cancel/${wholesalerId}`,
+      { method: "DELETE" },
+    );
+  }
 
-async getAllProductsForSeller(): Promise<Product[]> {
-  return this.request(`/local-seller/products`);
-}
+  async getAllProductsForSeller(): Promise<Product[]> {
+    return this.request(`/local-seller/products`);
+  }
 
+  async getPendingSubscriptionRequests(
+    wholesalerId: number,
+  ): Promise<SpringPage<SubscriptionDTO>> {
+    return this.request<SpringPage<SubscriptionDTO>>(
+      `/subscriptions/wholesaler/${wholesalerId}/pending`,
+    );
+  }
 
+  async getActiveSubscriptionRequests(
+    wholesalerId: number,
+  ): Promise<SpringPage<SubscriptionDTO>> {
+    return this.request<SpringPage<SubscriptionDTO>>(
+      `/subscriptions/wholesaler/${wholesalerId}/active`,
+    );
+  }
 
+  async approveSubscription(subscriptionId: number) {
+    return this.request(`/subscriptions/${subscriptionId}/accept`, {
+      method: "POST",
+    });
+  }
+
+  async rejectSubscription(subscriptionId: number) {
+    return this.request(`/subscriptions/${subscriptionId}/reject`, {
+      method: "POST",
+    });
+  }
 }
 
 export const api = new ApiService();

@@ -91,7 +91,7 @@ export function ProductFormModal({
                 ))}
               </select>
             </Field>
-          </div>
+          </div>  
 
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Price">

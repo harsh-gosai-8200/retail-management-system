@@ -16,8 +16,13 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
     Optional<Product> findBySkuCodeAndIdNot(String skuCode, Long id);
+    List<Product> findByIsActiveTrue();
     boolean existsBySkuCode(String skuCode);
-
+    List<Product> findByWholesalerIdAndIsActiveTrue(Long wholesalerId);
+    Page<Product> findByWholesalerIdAndIsActiveTrue(
+            Long wholesalerId,
+            Pageable pageable
+    );
 }
 
 

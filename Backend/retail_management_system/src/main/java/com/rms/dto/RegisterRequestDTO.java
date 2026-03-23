@@ -1,6 +1,6 @@
 package com.rms.dto;
 
-import com.rms.model.Role;
+import com.rms.model.enums.Role;
 import lombok.Data;
 
 @Data

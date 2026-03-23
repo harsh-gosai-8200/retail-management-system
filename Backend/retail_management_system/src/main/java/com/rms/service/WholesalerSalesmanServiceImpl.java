@@ -4,6 +4,7 @@ import com.rms.constants.Messages;
 import com.rms.dto.*;
 import com.rms.exception.ResourceNotFoundException;
 import com.rms.model.*;
+import com.rms.model.enums.Role;
 import com.rms.repository.*;
 import com.rms.specification.SalesmanAssignmentSpecification;
 import com.rms.specification.SalesmanSpecification;

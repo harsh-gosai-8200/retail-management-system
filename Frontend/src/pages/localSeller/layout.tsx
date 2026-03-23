@@ -1,16 +1,17 @@
 import { useState, type ComponentType } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   LayoutDashboard,
   LogOut,
   Menu,
   Package,
+  Store,
   User,
-  Users,
   X,
-  UserCheck,
+  ShoppingCart,
+  CreditCard,
 } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
 
 interface NavItem {
   name: string;
@@ -20,15 +21,61 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
-  { name: 'Dashboard', href: '/wholesaler', icon: LayoutDashboard, available: true },
-  { name: 'Products', href: '/wholesaler/products', icon: Package, available: true },
-  { name: 'Orders', href: '/wholesaler/orders', icon: Package, available: true },
-  { name: 'Salesmen', href: '/wholesaler/salesmen', icon: Users, available: true },
-  { name: 'Assignments', href: '/wholesaler/assignments', icon: Users, available: true },
-  { name: 'Payments', href: '/wholesaler/payments', icon: Package, available: false },
-  { name: 'Invoices', href: '/wholesaler/invoices', icon: Package, available: false },
-  { name: 'History', href: '/wholesaler/history', icon: Package, available: false },
-]
+  {
+    name: "Dashboard",
+    href: "/local-seller/dashboard",
+    icon: LayoutDashboard,
+    available: true,
+  },
+
+  {
+    name: "Wholesalers",
+    href: "/local-seller/wholesalers",
+    icon: Store,
+    available: true,
+  },
+
+  {
+    name: "Products",
+    href: "/local-seller/products",
+    icon: Package,
+    available: true,
+  },
+
+  {
+    name: "My Subscriptions",
+    href: "/local-seller/subscriptions",
+    icon: Store,
+    available: false,
+  },
+
+  {
+    name: "Orders",
+    href: "/local-seller/orders",
+    icon: Package,
+    available: false,
+  },
+
+  {
+    name: "Cart",
+    href: "/local-seller/cart",
+    icon: ShoppingCart,
+    available: true,
+  },
+
+  {
+    name: "Payments",
+    href: "/local-seller/payments",
+    icon: CreditCard,
+    available: false,
+  },
+  {
+    name: "History",
+    href: "/local-seller/history",
+    icon: Package,
+    available: false,
+  },
+];
 
 function NavLinks({
   pathname,
@@ -42,7 +89,8 @@ function NavLinks({
       {navigation.map((item) => {
         const isActive =
           pathname === item.href ||
-          (item.href !== "/wholesaler" && pathname.startsWith(item.href));
+          (item.href !== "/local-seller/dashboard" &&
+            pathname.startsWith(item.href));
 
         const className = `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
           item.available
@@ -80,19 +128,20 @@ function NavLinks({
   );
 }
 
-export function WholesalerLayout() {
+export function LocalSellerLayout() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Header */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-4">
             <button
               type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent text-slate-600 hover:bg-slate-100 lg:hidden"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 lg:hidden"
               onClick={() => setSidebarOpen((open) => !open)}
             >
               {sidebarOpen ? (
@@ -101,29 +150,29 @@ export function WholesalerLayout() {
                 <Menu className="h-5 w-5" />
               )}
             </button>
+
             <div>
               <h1 className="text-lg font-bold text-blue-900 sm:text-xl">
                 Retail Management
               </h1>
               <p className="text-xs text-slate-500 sm:text-sm">
-                {user?.username ? `${user.username} · ` : ""}Wholesaler
-                Dashboard
+                Local Seller · {user?.username || "Dashboard"}
               </p>
             </div>
           </div>
+
           <div className="flex items-center gap-2">
             <button
               type="button"
               className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"
-              aria-label="Profile"
             >
               <User className="h-5 w-5" />
             </button>
+
             <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-red-600 hover:bg-red-50"
-              aria-label="Logout"
               onClick={logout}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-red-600 hover:bg-red-50"
+              title="Logout"
             >
               <LogOut className="h-5 w-5" />
             </button>
@@ -132,30 +181,30 @@ export function WholesalerLayout() {
       </header>
 
       <div className="flex">
+        {/* Desktop Sidebar */}
         <aside className="hidden border-r border-slate-200 bg-white lg:block lg:w-64">
           <NavLinks pathname={location.pathname} />
         </aside>
 
+        {/* Mobile Sidebar */}
         {sidebarOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <button
-              type="button"
               className="absolute inset-0 bg-black/30"
               onClick={() => setSidebarOpen(false)}
-              aria-label="Close menu overlay"
             />
+
             <aside className="absolute inset-y-0 left-0 w-64 border-r border-slate-200 bg-white shadow-xl">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                 <h2 className="text-base font-semibold text-blue-900">Menu</h2>
                 <button
-                  type="button"
                   className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100"
                   onClick={() => setSidebarOpen(false)}
-                  aria-label="Close menu"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
+
               <NavLinks
                 pathname={location.pathname}
                 onNavigate={() => setSidebarOpen(false)}
@@ -164,6 +213,7 @@ export function WholesalerLayout() {
           </div>
         )}
 
+        {/* Main Content */}
         <main className="min-w-0 flex-1 p-4 sm:p-6">
           <Outlet />
         </main>

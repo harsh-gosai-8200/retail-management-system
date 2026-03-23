@@ -23,7 +23,7 @@ public class ProductRequestDTO {
     @Min(value = 0, message = "Stock quantity cannot be negative")
     private Integer stockQuantity;
 
-    @NotNull(message = "Wholesaler ID is required")
+
     private Long wholesalerId;
 
     private String skuCode;

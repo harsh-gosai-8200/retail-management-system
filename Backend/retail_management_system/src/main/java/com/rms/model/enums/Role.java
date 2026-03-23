@@ -1,4 +1,4 @@
-package com.rms.model;
+package com.rms.model.enums;
 
 public enum Role {
     WHOLESALER,

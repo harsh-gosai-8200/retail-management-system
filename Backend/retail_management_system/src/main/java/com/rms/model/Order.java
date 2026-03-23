@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import com.rms.model.OrderStatus;
+import com.rms.model.enums.OrderStatus;
 
 @Entity
 @Table(name = "orders")

@@ -82,6 +82,12 @@ import { RegisterPage } from './pages/auth/RegisterPage.tsx'
 import { WholesalerLayout } from './pages/wholesaler/WholesalerLayout.tsx'
 import { WholesalerDashboard } from './pages/wholesaler/WholesalerDashboard.tsx'
 import { ProductsPage } from './pages/wholesaler/ProductsPage.tsx'
+import LandingPage from "./pages/LandingPage";
+import { LocalSellerLayout } from "./pages/localSeller/layout.tsx";
+//import { WholesalersPage } from "./pages/localSeller/WholesalersPage";
+import  {LocalSellerDashboard } from "./pages/localSeller/LocalSellerDashboard.tsx";
+import  {WholesalersPage}  from './pages/localSeller/WholesalersPage.tsx'
+import  {WholesalerProductViews}  from './pages/localSeller/wholesaler/WholesalerProductViews.tsx'
 import { OrderDetailPage } from './pages/wholesaler/OrderDetailPage.tsx'
 import { OrdersPage } from './pages/wholesaler/OrdersPage.tsx'
 import { SalesmenPage } from './pages/wholesaler/SalesmenPage.tsx'
@@ -97,6 +103,9 @@ import { SellerOrdersPage } from './pages/salesman/SellerOrdersPage.tsx'
 import { OrderDetailPage as SalesmanOrderDetailPage } from './pages/salesman/OrderDetailPage.tsx'
 import { AllOrdersPage } from './pages/salesman/AllOrdersPage.tsx'
 import { DeliverOrderPage } from './pages/salesman/DeliverOrderPage.tsx'
+import { WholesalerSubscriptionRequests } from './pages/wholesaler/WholesalerSubscriptionRequests.tsx'
+import { CartPage } from './pages/localSeller/CartPage.tsx'
+import { LocalSellerProductsPage } from './pages/localSeller/LocalSellerProductsPage.tsx'
 
 function App() {
   const { user, isLoading } = useAuth();
@@ -112,14 +121,15 @@ function App() {
   return (
     <Routes>
       {/* Public Routes */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/auth/login" element={<LoginPage />} />
       <Route path="/auth/register" element={<RegisterPage />} />
 
-      {/* Wholesaler Routes - Only WHOLESALER can access */}
-      <Route element={<RoleBasedRoute allowedRoles={['WHOLESALER']} />}>
+        {/* Wholesaler Panel */}
         <Route path="/wholesaler" element={<WholesalerLayout />}>
           <Route index element={<WholesalerDashboard />} />
           <Route path="products" element={<ProductsPage />} />
+          <Route path="subscription-requests" element={<WholesalerSubscriptionRequests />}/>
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/:id" element={<OrderDetailPage />} />
           <Route path="salesmen" element={<SalesmenPage />} />
@@ -129,7 +139,6 @@ function App() {
           <Route path="salesmen/:id/assign" element={<AssignSellersPage />} />
           <Route path="assignments" element={<AssignmentsPage />} />
         </Route>
-      </Route>
 
       {/* Salesman Routes - Only SALESMAN can access */}
       <Route element={<RoleBasedRoute allowedRoles={['SALESMAN']} />}>
@@ -141,21 +150,30 @@ function App() {
           <Route path="orders/:orderId" element={<SalesmanOrderDetailPage />} />
           <Route path="orders/:orderId/deliver" element={<DeliverOrderPage />} />
         </Route>
+        </Route>
+
+      <Route path="/local-seller" element={<LocalSellerLayout />}>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<LocalSellerDashboard />} />
+        <Route path="wholesalers" element={<WholesalersPage />} />
+        <Route path="wholesaler/:id" element={<WholesalerProductViews />} />
+        <Route path="cart" element={<CartPage />}/>
+        <Route path="products" element={<LocalSellerProductsPage />}/>
       </Route>
 
-      {/* Default redirect based on role */}
-      <Route path="*" element={
+      {/* Fallback */}
+      <Route path="*" element = {
         user ? (
-          user.role === 'WHOLESALER' ? <Navigate to="/wholesaler" replace /> :
-          user.role === 'SALESMAN' ? <Navigate to="/salesman" replace /> :
-          user.role === 'LOCAL_SELLER' ? <Navigate to="/local-seller" replace /> :
-          <Navigate to="/auth/login" replace />
+          user.role === "WHOLESALER" ? <Navigate to="/wholesaler" replace /> :
+            user.role === "SALESMAN" ? <Navigate to="/salesman" replace /> :
+              user.role === "LOCAL_SELLER" ? <Navigate to="/local-seller" replace />:
+                <Navigate to="auth/login" replace />
         ) : (
-          <Navigate to="/auth/login" replace />
+          <Navigate to="auth/login" replace />
         )
-      } />
+      }/>
     </Routes>
-  )
+  );
 }
 
 export default App

@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import com.rms.model.Role;
+
+import com.rms.model.enums.Role;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -30,6 +30,7 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Column
     private String phone;
 
     @Column(nullable = false)
@@ -41,6 +42,7 @@ public class User {
 
     @UpdateTimestamp
     private Timestamp updatedAt;
+
 
 
 }

@@ -4,7 +4,8 @@ import com.rms.dto.ProductDTO;
 import com.rms.dto.ProductRequestDTO;
 import com.rms.exception.ResourceNotFoundException;
 import com.rms.model.Product;
-import com.rms.model.Role;
+import com.rms.model.enums.Role;
+import com.rms.model.User;
 import com.rms.model.Wholesaler;
 import com.rms.repository.ProductRepository;
 import com.rms.repository.UserRepository;
@@ -23,9 +24,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static com.rms.constants.Constants.*;
-import static com.rms.constants.Messages.*;
 
 @Service
 @RequiredArgsConstructor
@@ -51,28 +49,28 @@ public class ProductServiceImpl implements ProductService {
 
         // validate required fields
         if (productRequestDTO.getWholesalerId() == null) {
-            throw new IllegalArgumentException(WHOLESALER_ID_REQUIRED);
+            throw new IllegalArgumentException("Wholesaler ID is required");
         }
 
         // validate wholesaler exists AND is actually a wholesaler
         Wholesaler wholesaler = wholesalerRepository.findById(productRequestDTO.getWholesalerId())
-                .orElseThrow(() -> new ResourceNotFoundException(WHOLESALER, ID, productRequestDTO.getWholesalerId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Wholesaler", "id", productRequestDTO.getWholesalerId()));
 
         // check if user is actually a wholesaler
         if (wholesaler.getUser().getRole() != Role.WHOLESALER) {
             //throw new IllegalArgumentException("User with ID " + productRequestDTO.getWholesalerId() + " is not a wholesaler");
-            throw new IllegalArgumentException(USER_WITH_ID + wholesaler.getUser().getId() + NOT_WHOLESALER);
+            throw new IllegalArgumentException("User with ID " + wholesaler.getUser().getId() + " is not a wholesaler");
         }
 
         // check if wholesaler is active
         if (!wholesaler.getUser().getIsActive()) {
-            throw new IllegalArgumentException(WHOLESALER_ACCOUNT_INACTIVE);
+            throw new IllegalArgumentException("Wholesaler account is inactive");
         }
 
         // check if SKU already exists
         if (productRequestDTO.getSkuCode() != null &&
                 productRepository.existsBySkuCode(productRequestDTO.getSkuCode())) {
-            throw new IllegalArgumentException(SKU_CODE_ALREADY_EXIST + productRequestDTO.getSkuCode());
+            throw new IllegalArgumentException("SKU code already exists: " + productRequestDTO.getSkuCode());
         }
 
         // create new product
@@ -105,14 +103,14 @@ public class ProductServiceImpl implements ProductService {
 
         // Find existing product
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(PRODUCT, ID, id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
         // Check if SKU is being changed and already exists
         if (productRequestDTO.getSkuCode() != null &&
                 !productRequestDTO.getSkuCode().equals(product.getSkuCode())) {
             productRepository.findBySkuCodeAndIdNot(productRequestDTO.getSkuCode(), id)
                     .ifPresent(p -> {
-                        throw new IllegalArgumentException(SKU_CODE_ALREADY_EXIST + productRequestDTO.getSkuCode());
+                        throw new IllegalArgumentException("SKU code already exists: " + productRequestDTO.getSkuCode());
                     });
         }
 
@@ -135,7 +133,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(PRODUCT, ID, id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
         return mapEntityToDTO(product);
     }
@@ -181,7 +179,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(PRODUCT, ID, id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
 //        // Soft delete (set isActive to false)
 //        product.setIsActive(false);
@@ -223,7 +221,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDTO toggleProductStatus(Long id, Boolean status) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(PRODUCT, ID, id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
         product.setIsActive(status);
         Product updatedProduct = productRepository.save(product);

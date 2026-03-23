@@ -1,4 +1,4 @@
-package com.rms.model;
+package com.rms.model.enums;
 
 public enum OrderStatus {
     PENDING, APPROVED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REJECTED, PARTIALLY_DELIVERED, FAILED, RETURNED

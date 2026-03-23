@@ -1,7 +1,7 @@
 package com.rms.specification;
 
 import com.rms.model.Order;
-import com.rms.model.OrderStatus;
+import com.rms.model.enums.OrderStatus;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 

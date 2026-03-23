@@ -7,7 +7,7 @@ import {
   XCircle,
   IndianRupee 
 } from 'lucide-react';
-import type { OrderStats } from '../../../types/order';
+import type { OrderStats } from '../../../../types/order';
 
 interface Props {
   stats: OrderStats | null;

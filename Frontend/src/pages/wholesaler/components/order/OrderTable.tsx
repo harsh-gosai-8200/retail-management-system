@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { OrderStatusBadge } from './OrderStatusBadge';
-import type { Order } from '../../../types/order';
+import type { Order } from '../../../../types/order';
 
 interface Props {
   orders: Order[];

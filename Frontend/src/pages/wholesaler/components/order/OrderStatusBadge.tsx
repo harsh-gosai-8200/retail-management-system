@@ -1,5 +1,5 @@
 import React from 'react';
-import type { OrderStatus } from '../../../types/order';
+import type { OrderStatus } from '../../../../types/order';
 
 interface Props {
   status: OrderStatus;

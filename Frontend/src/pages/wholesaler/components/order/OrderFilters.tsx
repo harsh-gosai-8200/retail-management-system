@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
-import type { OrderFilters, OrderStatus } from '../../../types/order';
+import type { OrderFilters, OrderStatus } from '../../../../types/order';
 
 interface Props {
   filters: OrderFilters;

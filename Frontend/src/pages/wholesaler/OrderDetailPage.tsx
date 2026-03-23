@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
-import { OrderStatusBadge } from './components/OrderStatusBadge';
-import { StatusUpdateModal } from './components/StatusUpdateModal';
+import { OrderStatusBadge } from './components/order/OrderStatusBadge'; 
+import { StatusUpdateModal } from './components/order/StatusUpdateModal';
 import type { Order } from '../../types/order';
 
 export const OrderDetailPage: React.FC = () => {

@@ -10,7 +10,6 @@ import type {
 } from '../types/order';
 
 export const orderService = {
-  // Get all orders with filters
   getOrders: async (
   wholesalerId: number, 
   filters: OrderFilters
@@ -21,7 +20,6 @@ export const orderService = {
     size: filters.size,
   };
 
-  // Map frontend sort field to backend field
   const sortField = filters.sortBy === 'orderDate' ? 'createdAt' : filters.sortBy;
   params.sort = `${sortField},${filters.sortDir}`;
 
@@ -43,7 +41,6 @@ export const orderService = {
   };
 },
 
-  // Get pending orders
   getPendingOrders: async (
     wholesalerId: number,
     page: number = 0,
@@ -64,7 +61,6 @@ export const orderService = {
     };
   },
 
-  // Get single order
   getOrder: async (wholesalerId: number, orderId: number): Promise<Order> => {
     return api.request<Order>(
       `/wholesaler/orders/${orderId}`,
@@ -72,7 +68,6 @@ export const orderService = {
     );
   },
 
-  // Approve order
   approveOrder: async (
     wholesalerId: number, 
     orderId: number
@@ -86,7 +81,6 @@ export const orderService = {
     );
   },
 
-  // Reject order
   rejectOrder: async (
     wholesalerId: number,
     orderId: number,
@@ -102,7 +96,6 @@ export const orderService = {
     );
   },
 
-  // Update order status
   updateStatus: async (
     wholesalerId: number,
     orderId: number,
@@ -118,7 +111,6 @@ export const orderService = {
     );
   },
 
-  // Get statistics
   getStats: async (wholesalerId: number): Promise<OrderStats> => {
     return api.request<OrderStats>(
       `/wholesaler/orders/stats`,

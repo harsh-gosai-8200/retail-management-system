@@ -1,5 +1,82 @@
-import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+// import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+// import { useAuth } from './context/AuthContext.tsx'
+// import { LoginPage } from './pages/auth/LoginPage.tsx'
+// import { RegisterPage } from './pages/auth/RegisterPage.tsx'
+// import { WholesalerLayout } from './pages/wholesaler/WholesalerLayout.tsx'
+// import { WholesalerDashboard } from './pages/wholesaler/WholesalerDashboard.tsx'
+// import { ProductsPage } from './pages/wholesaler/ProductsPage.tsx'
+// import { OrderDetailPage } from './pages/wholesaler/OrderDetailPage.tsx'
+// import { OrdersPage } from './pages/wholesaler/OrdersPage.tsx'
+// import { SalesmenPage } from './pages/wholesaler/SalesmenPage.tsx'
+// import { SalesmanDetailsPage } from './pages/wholesaler/SalesmanDetailsPage.tsx'
+// import { CreateSalesmanPage } from './pages/wholesaler/CreateSalesmanPage.tsx'
+// import { AssignSellersPage } from './pages/wholesaler/AssignSellersPage.tsx'
+// import { AssignmentsPage } from './pages/wholesaler/AssignmentsPage.tsx'
+// import { EditSalesmanPage } from './pages/wholesaler/EditSalesmanPage.tsx'
+// import { SalesmanLayout } from './pages/salesman/SalesmanLayout.tsx'
+// import { SalesmanDashboard } from './pages/salesman/SalesmanDashboard.tsx'
+// import { AssignedSellersPage } from './pages/salesman/AssignedSellersPage.tsx'
+// import { SellerOrdersPage } from './pages/salesman/SellerOrdersPage.tsx'
+
+// function ProtectedRoute() {
+//   const { isAuthenticated, isLoading } = useAuth()
+//   const location = useLocation()
+
+//   if (isLoading) {
+//     return (
+//       <div className="flex min-h-screen items-center justify-center bg-white">
+//         <div className="h-10 w-10 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" aria-label="Loading" />
+//       </div>
+//     )
+//   }
+
+//   if (!isAuthenticated) {
+//     return <Navigate to="/auth/login" state={{ from: location }} replace />
+//   }
+
+//   return <Outlet />
+// }
+
+// function App() {
+//   return (
+//     <Routes>
+//       <Route path="/auth/login" element={<LoginPage />} />
+//       <Route path="/auth/register" element={<RegisterPage />} />
+
+//       <Route element={<ProtectedRoute />}>
+//         <Route path="/wholesaler" element={<WholesalerLayout />}>
+//           <Route index element={<WholesalerDashboard />} />
+//           <Route path="products" element={<ProductsPage />} />
+//           <Route path="orders" element={<OrdersPage />} />
+//           <Route path="orders/:id" element={<OrderDetailPage />} />
+//           <Route path="salesmen" element={<SalesmenPage />} />
+//           <Route path="salesmen/create" element={<CreateSalesmanPage />} />
+//           <Route path="salesmen/:id" element={<SalesmanDetailsPage />} />
+//           <Route path="salesmen/:id/edit" element={<EditSalesmanPage />} />
+//           <Route path="salesmen/:id/assign" element={<AssignSellersPage />} />
+//           <Route path="assignments" element={<AssignmentsPage />} />
+//         </Route>
+//         <Route path="/salesman" element={<SalesmanLayout />}>
+//           <Route index element={<SalesmanDashboard />} />
+//           <Route path="assigned-sellers" element={<AssignedSellersPage />} />
+//           <Route path="sellers/:sellerId/orders" element={<SellerOrdersPage />} />
+//           <Route path="orders" element={<SellerOrdersPage />} /> 
+//           <Route path="orders/:orderId" element={<OrderDetailPage />} />
+//         </Route>
+//       </Route>
+
+//       <Route path="*" element={<Navigate to="/wholesaler" replace />} />
+//     </Routes>
+//   )
+// }
+
+// export default App
+
+
+
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.tsx'
+import { RoleBasedRoute } from './components/RoleBasedRoute.tsx'
 import { LoginPage } from './pages/auth/LoginPage.tsx'
 import { RegisterPage } from './pages/auth/RegisterPage.tsx'
 import { WholesalerLayout } from './pages/wholesaler/WholesalerLayout.tsx'
@@ -11,27 +88,33 @@ import { LocalSellerLayout } from "./pages/localSeller/layout.tsx";
 import  {LocalSellerDashboard } from "./pages/localSeller/LocalSellerDashboard.tsx";
 import  {WholesalersPage}  from './pages/localSeller/WholesalersPage.tsx'
 import  {WholesalerProductViews}  from './pages/localSeller/wholesaler/WholesalerProductViews.tsx'
+import { OrderDetailPage } from './pages/wholesaler/OrderDetailPage.tsx'
+import { OrdersPage } from './pages/wholesaler/OrdersPage.tsx'
+import { SalesmenPage } from './pages/wholesaler/SalesmenPage.tsx'
+import { SalesmanDetailsPage } from './pages/wholesaler/SalesmanDetailsPage.tsx'
+import { CreateSalesmanPage } from './pages/wholesaler/CreateSalesmanPage.tsx'
+import { AssignSellersPage } from './pages/wholesaler/AssignSellersPage.tsx'
+import { AssignmentsPage } from './pages/wholesaler/AssignmentsPage.tsx'
+import { EditSalesmanPage } from './pages/wholesaler/EditSalesmanPage.tsx'
+import { SalesmanLayout } from './pages/salesman/SalesmanLayout.tsx'
+import { SalesmanDashboard } from './pages/salesman/SalesmanDashboard.tsx'
+import { AssignedSellersPage } from './pages/salesman/AssignedSellersPage.tsx'
+import { SellerOrdersPage } from './pages/salesman/SellerOrdersPage.tsx'
+import { OrderDetailPage as SalesmanOrderDetailPage } from './pages/salesman/OrderDetailPage.tsx'
+import { AllOrdersPage } from './pages/salesman/AllOrdersPage.tsx'
+import { DeliverOrderPage } from './pages/salesman/DeliverOrderPage.tsx'
 
-function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth()
-  const location = useLocation()
+function App() {
+  const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" aria-label="Loading" />
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
       </div>
-    )
+    );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/auth/login" state={{ from: location }} replace />
-  }
-
-  return <Outlet />
-}
-
-function App() {
   return (
     <Routes>
 
@@ -47,8 +130,26 @@ function App() {
         <Route path="/wholesaler" element={<WholesalerLayout />}>
           <Route index element={<WholesalerDashboard />} />
           <Route path="products" element={<ProductsPage />} />
-          <Route path="orders" element={<OrdersPage />} />         
-    <Route path="orders/:id" element={<OrderDetailPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="orders/:id" element={<OrderDetailPage />} />
+          <Route path="salesmen" element={<SalesmenPage />} />
+          <Route path="salesmen/create" element={<CreateSalesmanPage />} />
+          <Route path="salesmen/:id" element={<SalesmanDetailsPage />} />
+          <Route path="salesmen/:id/edit" element={<EditSalesmanPage />} />
+          <Route path="salesmen/:id/assign" element={<AssignSellersPage />} />
+          <Route path="assignments" element={<AssignmentsPage />} />
+        </Route>
+      </Route>
+
+      {/* Salesman Routes - Only SALESMAN can access */}
+      <Route element={<RoleBasedRoute allowedRoles={['SALESMAN']} />}>
+        <Route path="/salesman" element={<SalesmanLayout />}>
+          <Route index element={<SalesmanDashboard />} />
+          <Route path="assigned-sellers" element={<AssignedSellersPage />} />
+          <Route path="sellers/:sellerId/orders" element={<SellerOrdersPage />} />
+          <Route path="orders" element={<AllOrdersPage />} />
+          <Route path="orders/:orderId" element={<SalesmanOrderDetailPage />} />
+          <Route path="orders/:orderId/deliver" element={<DeliverOrderPage />} />
         </Route>
 
 <Route path="/local-seller" element={<LocalSellerLayout />}>
@@ -64,6 +165,17 @@ function App() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
 
+      {/* Default redirect based on role */}
+      <Route path="*" element={
+        user ? (
+          user.role === 'WHOLESALER' ? <Navigate to="/wholesaler" replace /> :
+          user.role === 'SALESMAN' ? <Navigate to="/salesman" replace /> :
+          user.role === 'LOCAL_SELLER' ? <Navigate to="/local-seller" replace /> :
+          <Navigate to="/auth/login" replace />
+        ) : (
+          <Navigate to="/auth/login" replace />
+        )
+      } />
     </Routes>
   )
 }

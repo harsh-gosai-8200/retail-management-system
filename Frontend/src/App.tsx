@@ -9,20 +9,13 @@ import { WholesalerSubscriptionRequests } from "./pages/wholesaler/WholesalerSub
 import LandingPage from "./pages/LandingPage";
 import { LocalSellerLayout } from "./pages/localSeller/layout.tsx";
 //import { WholesalersPage } from "./pages/localSeller/WholesalersPage";
-<<<<<<< Updated upstream
-import { LocalSellerDashboard } from "./pages/localSeller/LocalSellerDashboard.tsx";
-import { WholesalersPage } from "./pages/localSeller/WholesalersPage.tsx";
+import  {LocalSellerDashboard} from "./pages/localSeller/LocalSellerDashboard.tsx";
+import {WholesalersPage}  from "./pages/localSeller/WholesalersPage.tsx";
 import { WholesalerProductViews } from "./pages/localSeller/wholesaler/WholesalerProductViews.tsx";
 import { LocalSellerProductsPage } from "./pages/localSeller/LocalSellerProductsPage.tsx";
 import { OrdersPage } from "./pages/wholesaler/OrdersPage.tsx";
 import { OrderDetailPage } from "./pages/wholesaler/OrderDetailPage.tsx";
-=======
-import  {LocalSellerDashboard } from "./pages/localSeller/LocalSellerDashboard.tsx";
-import  {WholesalersPage}  from './pages/localSeller/WholesalersPage.tsx'
-import  {WholesalerProductViews}  from './pages/localSeller/wholesaler/WholesalerProductViews.tsx'
-import { OrdersPage } from './pages/wholesaler/OrdersPage.tsx'
-import { OrderDetailPage } from './pages/wholesaler/OrderDetailPage.tsx'
->>>>>>> Stashed changes
+
 
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();

@@ -103,6 +103,9 @@ import { SellerOrdersPage } from './pages/salesman/SellerOrdersPage.tsx'
 import { OrderDetailPage as SalesmanOrderDetailPage } from './pages/salesman/OrderDetailPage.tsx'
 import { AllOrdersPage } from './pages/salesman/AllOrdersPage.tsx'
 import { DeliverOrderPage } from './pages/salesman/DeliverOrderPage.tsx'
+import { WholesalerSubscriptionRequests } from './pages/wholesaler/WholesalerSubscriptionRequests.tsx'
+import { CartPage } from './pages/localSeller/CartPage.tsx'
+import { LocalSellerProductsPage } from './pages/localSeller/LocalSellerProductsPage.tsx'
 
 function App() {
   const { user, isLoading } = useAuth();
@@ -122,24 +125,11 @@ function App() {
       <Route path="/auth/login" element={<LoginPage />} />
       <Route path="/auth/register" element={<RegisterPage />} />
 
-      {/* Protected Routes */}
-      <Route element={<ProtectedRoute />} />
-
-      {/* Wholesaler Panel */}
-      <Route path="/wholesaler" element={<WholesalerLayout />}>
-        <Route index element={<WholesalerDashboard />} />
-        <Route
-          path="subscription-requests"
-          element={<WholesalerSubscriptionRequests />}
-        />
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="orders" element={<OrdersPage />} />
-        <Route path="orders/:id" element={<OrderDetailPage />} />
-      </Route>
         {/* Wholesaler Panel */}
         <Route path="/wholesaler" element={<WholesalerLayout />}>
           <Route index element={<WholesalerDashboard />} />
           <Route path="products" element={<ProductsPage />} />
+          <Route path="subscription-requests" element={<WholesalerSubscriptionRequests />}/>
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/:id" element={<OrderDetailPage />} />
           <Route path="salesmen" element={<SalesmenPage />} />
@@ -149,7 +139,6 @@ function App() {
           <Route path="salesmen/:id/assign" element={<AssignSellersPage />} />
           <Route path="assignments" element={<AssignmentsPage />} />
         </Route>
-      </Route>
 
       {/* Salesman Routes - Only SALESMAN can access */}
       <Route element={<RoleBasedRoute allowedRoles={['SALESMAN']} />}>
@@ -161,6 +150,7 @@ function App() {
           <Route path="orders/:orderId" element={<SalesmanOrderDetailPage />} />
           <Route path="orders/:orderId/deliver" element={<DeliverOrderPage />} />
         </Route>
+        </Route>
 
       <Route path="/local-seller" element={<LocalSellerLayout />}>
         <Route index element={<Navigate to="dashboard" replace />} />
@@ -168,12 +158,20 @@ function App() {
         <Route path="wholesalers" element={<WholesalersPage />} />
         <Route path="wholesaler/:id" element={<WholesalerProductViews />} />
         <Route path="cart" element={<CartPage />}/>
-        <Route path="products" element={<LocalSellerProductsPage />}
-         />
+        <Route path="products" element={<LocalSellerProductsPage />}/>
       </Route>
 
       {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element = {
+        user ? (
+          user.role === "WHOLESALER" ? <Navigate to="/wholesaler" replace /> :
+            user.role === "SALESMAN" ? <Navigate to="/salesman" replace /> :
+              user.role === "LOCAL_SELLER" ? <Navigate to="/local-seller" replace />:
+                <Navigate to="auth/login" replace />
+        ) : (
+          <Navigate to="auth/login" replace />
+        )
+      }/>
     </Routes>
   );
 }

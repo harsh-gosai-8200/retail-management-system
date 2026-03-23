@@ -6,6 +6,7 @@ import {
   Menu,
   Package,
   User,
+  Users,
   X,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -21,6 +22,8 @@ const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/wholesaler', icon: LayoutDashboard, available: true },
   { name: 'Products', href: '/wholesaler/products', icon: Package, available: true },
   { name: 'Orders', href: '/wholesaler/orders', icon: Package, available: true },
+  { name: 'Salesmen', href: '/wholesaler/salesmen', icon: Users, available: true },
+  { name: 'Assignments', href: '/wholesaler/assignments', icon: Users, available: true },
   { name: 'Payments', href: '/wholesaler/payments', icon: Package, available: false },
   { name: 'Invoices', href: '/wholesaler/invoices', icon: Package, available: false },
   { name: 'History', href: '/wholesaler/history', icon: Package, available: false },

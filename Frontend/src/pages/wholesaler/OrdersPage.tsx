@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useOrders } from '../../hooks/useOrders';
-import { OrderStatsCard } from './components/OrderStats';
-import { OrderFiltersComponent } from './components/OrderFilters';
-import { OrderTable } from './components/OrderTable';
-import { StatusUpdateModal } from './components/StatusUpdateModal';
+import { OrderStatsCard } from './components/order/OrderStats'; 
+import { OrderFiltersComponent } from './components/order/OrderFilters'; 
+import { OrderTable } from './components/order/OrderTable';
+import { StatusUpdateModal } from './components/order/StatusUpdateModal';
 import type { Order } from '../../types/order';
 
 export const OrdersPage: React.FC = () => {
@@ -53,7 +53,7 @@ export const OrdersPage: React.FC = () => {
   };
 
   const handlePageChange = (newPage: number) => {
-    updateFilters({ page: newPage });  // ✅ Use updateFilters
+    updateFilters({ page: newPage });  
   };
 
   return (

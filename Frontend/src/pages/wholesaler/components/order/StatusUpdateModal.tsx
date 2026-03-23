@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import type { OrderStatus } from '../../../types/order';
+import type { OrderStatus } from '../../../../types/order';
 
 interface Props {
   isOpen: boolean;

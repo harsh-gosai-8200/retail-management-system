@@ -2,7 +2,6 @@ package com.rms.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "local_sellers")

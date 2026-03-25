@@ -2,7 +2,6 @@ import { api } from './api';
 import type { CartItem, CartSummary, AddToCartRequest } from '../types/cart';
 
 export const cartService = {
-    // Add an item to the cart
     addToCart: async (
         sellerId: number,
         productId: number,
@@ -14,12 +13,10 @@ export const cartService = {
         });
     },
 
-    // Get the cart for a seller
     getCart: async (sellerId: number): Promise<CartSummary> => {
         return api.request<CartSummary>(`/cart?sellerId=${sellerId}`);
     },
 
-    // Update quantity of a cart item
     updateQuantity: async (
         sellerId: number,
         cartItemId: number,
@@ -31,7 +28,6 @@ export const cartService = {
         );
     },
 
-    // Remove an item from the cart
     removeItem: async (sellerId: number, cartItemId: number): Promise<void> => {
     return api.request<void>(
         `/cart/items/${cartItemId}`,
@@ -39,7 +35,6 @@ export const cartService = {
     );
 },
 
-    // Clear the cart
     clearCart: async (sellerId: number): Promise<{ message: string }> => {
         return api.request<{ message: string }>(
             `/cart/clear?}`,
@@ -47,7 +42,6 @@ export const cartService = {
         );
     },
 
-    // Get cart count
     getCartCount: async (sellerId: number): Promise<number> => {
         const response = await api.request<{ count: number }>(
             `/cart/count?sellerId=${sellerId}`

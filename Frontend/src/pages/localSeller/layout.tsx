@@ -11,6 +11,7 @@ import {
   X,
   ShoppingCart,
   CreditCard,
+  FileText,
 } from "lucide-react";
 
 interface NavItem {
@@ -43,24 +44,31 @@ const navigation: NavItem[] = [
   },
 
   {
-    name: "My Subscriptions",
-    href: "/local-seller/subscriptions",
-    icon: Store,
-    available: false,
+    name: "Cart",
+    href: "/local-seller/cart",
+    icon: ShoppingCart,
+    available: true,
   },
 
   {
     name: "Orders",
     href: "/local-seller/orders",
     icon: Package,
-    available: false,
+    available: true,
   },
 
   {
-    name: "Cart",
-    href: "/local-seller/cart",
-    icon: ShoppingCart,
+    name: "Invoices",
+    href: "/local-seller/invoices",
+    icon: FileText,
     available: true,
+  },
+
+  {
+    name: "My Subscriptions",
+    href: "/local-seller/subscriptions",
+    icon: Store,
+    available: false,
   },
 
   {
@@ -69,6 +77,7 @@ const navigation: NavItem[] = [
     icon: CreditCard,
     available: false,
   },
+
   {
     name: "History",
     href: "/local-seller/history",
@@ -92,13 +101,12 @@ function NavLinks({
           (item.href !== "/local-seller/dashboard" &&
             pathname.startsWith(item.href));
 
-        const className = `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-          item.available
-            ? isActive
-              ? "bg-blue-50 text-blue-900"
-              : "text-slate-700 hover:bg-slate-100"
-            : "cursor-not-allowed text-slate-400"
-        }`;
+        const className = `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${item.available
+          ? isActive
+            ? "bg-blue-50 text-blue-900"
+            : "text-slate-700 hover:bg-slate-100"
+          : "cursor-not-allowed text-slate-400"
+          }`;
 
         if (!item.available) {
           return (

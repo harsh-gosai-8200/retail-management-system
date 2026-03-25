@@ -56,6 +56,7 @@ public class AuthService {
             wholesaler.setBusinessName(request.getBusinessName());
             wholesaler.setAddress(request.getAddress());
             wholesaler.setGstNumber(request.getGstNumber());
+            wholesaler.setIsActive(true);
             wholesalerRepository.save(wholesaler);
 
         } else if (request.getRole() == Role.LOCAL_SELLER) {

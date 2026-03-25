@@ -83,7 +83,14 @@ export function CartPage() {
   };
 
   const handleCheckout = () => {
-    navigate("/local-seller/checkout");
+    if (!cart || cart.items.length === 0) {
+      setError("Your cart is empty");
+      return;
+    }
+    
+    navigate("/local-seller/checkout", { 
+      state: { cart } 
+    });
   };
 
   // Loading

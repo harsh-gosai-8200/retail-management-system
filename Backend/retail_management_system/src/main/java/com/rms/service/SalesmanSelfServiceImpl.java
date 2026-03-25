@@ -36,6 +36,7 @@ public class SalesmanSelfServiceImpl implements SalesmanSelfService {
     private final SalesmanAssignmentRepository assignmentRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final InvoiceService invoiceService;
 
     /**
      * Fetch salesman profile data to show on profile
@@ -272,6 +273,8 @@ public class SalesmanSelfServiceImpl implements SalesmanSelfService {
         order.setDeliveredAt(LocalDateTime.now());
 
         orderRepository.save(order);
+
+        invoiceService.generateAndSendInvoice(orderId);
 
         return DeliveryResponseDTO.builder()
                 .orderId(order.getId())

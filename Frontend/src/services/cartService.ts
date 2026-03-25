@@ -42,7 +42,7 @@ export const cartService = {
     // Clear the cart
     clearCart: async (sellerId: number): Promise<{ message: string }> => {
         return api.request<{ message: string }>(
-            `/cart/clear?}`,
+            `/cart/clear`,
             { method: 'DELETE',params:{sellerId} }
         );
     },

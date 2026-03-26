@@ -115,6 +115,8 @@ import { LsOrderDetailPage } from './pages/localSeller/LsOrderDetailPage.tsx'
 import { CheckoutPage } from './pages/localSeller/CheckoutPage.tsx'
 import { WholesalerInvoiceDetailPage } from './pages/wholesaler/InvoiceDetailPage.tsx'
 import { WholesalerInvoicesPage } from './pages/wholesaler/InvoicesPage.tsx'
+import { WholesalerProfilePage } from './pages/wholesaler/WholesalerProfilePage.tsx'
+import { LocalSellerProfilePage } from './pages/localSeller/LocalSellerProfilePage.tsx'
 
 function App() {
   const { user, isLoading } = useAuth();
@@ -151,6 +153,7 @@ function App() {
         <Route path="assignments" element={<AssignmentsPage />} />
         <Route path="invoices" element={<WholesalerInvoicesPage />} />
         <Route path="invoices/:orderId" element={<WholesalerInvoiceDetailPage />} />
+        <Route path="/wholesaler/profile" element={<WholesalerProfilePage />} />
       </Route>
 
       {/* Salesman Routes - Only SALESMAN can access */}
@@ -177,6 +180,8 @@ function App() {
         <Route path="invoices" element={<InvoicesPage />} />
         <Route path="invoices/:orderId" element={<InvoiceDetailPage />} />
         <Route path="products" element={<LocalSellerProductsPage />} />
+        <Route path="/local-seller/profile" element={<LocalSellerProfilePage />}
+/>
       </Route>
 
       {/* Fallback */}

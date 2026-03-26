@@ -1,6 +1,8 @@
 package com.rms.service;
 
 import com.rms.dto.ProductDTO;
+import com.rms.dto.SellerDTO;
+import com.rms.dto.UpdateSellerDTO;
 import com.rms.dto.WholesalerDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,4 +29,10 @@ public interface LocalSellerService {
     void unsubscribeWholesaler(Long localSellerId, Long wholesalerId);
 
     List<ProductDTO> getAllProductsForSeller();
+
+    SellerDTO getSellerProfile(Long userId);
+
+    SellerDTO updateSellerProfile(Long userId, UpdateSellerDTO dto);
+
+
 }

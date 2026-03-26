@@ -2,7 +2,12 @@ package com.rms.controller;
 
 import com.rms.constants.MessageKeys;
 import com.rms.dto.ProductDTO;
+import com.rms.dto.SellerDTO;
+import com.rms.dto.UpdateSellerDTO;
 import com.rms.dto.WholesalerDTO;
+import com.rms.model.User;
+import com.rms.repository.LocalSellerRepository;
+import com.rms.repository.UserRepository;
 import com.rms.service.LocalSellerService;
 import com.rms.service.MessageService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +30,7 @@ public class LocalSellerController {
 
     private final LocalSellerService localSellerService;
     private final MessageService messageService;
+    private final UserRepository userRepository;
 
     /*  Get all active wholesalers */
 
@@ -97,6 +104,29 @@ public class LocalSellerController {
         Page<ProductDTO> productsPage = localSellerService.getProductsOfWholesaler(
                 localSellerId, wholesalerId, pageable);
         return ResponseEntity.ok(productsPage);
+    }
+
+    // PROFILE
+    @GetMapping("/profile")
+    public SellerDTO getProfile(Authentication auth) {
+
+        String email = auth.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND)));
+
+        return localSellerService.getSellerProfile(user.getId());
+    }
+
+    @PutMapping("/profile")
+    public SellerDTO updateProfile(Authentication auth, @RequestBody UpdateSellerDTO dto) {
+
+        String email = auth.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND)));
+
+        return localSellerService.updateSellerProfile(user.getId(), dto);
     }
 
 }

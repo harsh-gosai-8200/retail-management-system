@@ -3,6 +3,7 @@ package com.rms.service;
 import com.rms.constants.MessageKeys;
 import com.rms.dto.UpdateWholesalerDTO;
 import com.rms.dto.WholesalerDTO;
+import com.rms.exception.ResourceNotFoundException;
 import com.rms.model.User;
 import com.rms.model.Wholesaler;
 import com.rms.repository.WholesalerRepository;
@@ -19,31 +20,32 @@ public class WholesalerServiceImpl implements WholesalerService{
 
     @Override
     public WholesalerDTO getProfile(Long userId) {
-        Wholesaler wholesaler = wholesalerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException(messageService.get(MessageKeys.WHOLESALER_NOT_FOUND)));
-        return mapToDTO(wholesaler);
+        return wholesalerRepository.findByUserId(userId)
+                .map(this::mapToDTO)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messageService.get(MessageKeys.WHOLESALER_NOT_FOUND)
+                ));
     }
 
-    @Override
     public WholesalerDTO updateProfile(Long userId, UpdateWholesalerDTO dto) {
-        Wholesaler seller = wholesalerRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException(messageService.get(MessageKeys.WHOLESALER_NOT_FOUND)));
+        Wholesaler wholesaler = wholesalerRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.get(MessageKeys.WHOLESALER_NOT_FOUND)));
 
-        User user = seller.getUser();
+        User user = wholesaler.getUser();
 
         // Update User fields
         if (dto.getUsername() != null) user.setUsername(dto.getUsername());
         if (dto.getPhone()!= null) user.setPhone(dto.getPhone());
 
         // Update Seller fields
-        if (dto.getBusinessName() !=null) seller.setBusinessName(dto.getBusinessName());
-        if (dto.getGstNumber()!=null) seller.setGstNumber(dto.getGstNumber());
-        if (dto.getAddress() != null) seller.setAddress(dto.getAddress());
+        if (dto.getBusinessName() !=null) wholesaler.setBusinessName(dto.getBusinessName());
+        if (dto.getGstNumber()!=null) wholesaler.setGstNumber(dto.getGstNumber());
+        if (dto.getAddress() != null) wholesaler.setAddress(dto.getAddress());
 
         // Save
-        wholesalerRepository.save(seller);
+        wholesalerRepository.save(wholesaler);
 
-        return mapToDTO(seller);
+        return mapToDTO(wholesaler);
     }
 
     private WholesalerDTO mapToDTO(Wholesaler wholesaler) {

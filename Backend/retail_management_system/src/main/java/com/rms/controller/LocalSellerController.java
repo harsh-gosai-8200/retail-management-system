@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/local-seller")
@@ -108,25 +109,37 @@ public class LocalSellerController {
 
     // PROFILE
     @GetMapping("/profile")
-    public SellerDTO getProfile(Authentication auth) {
+    public ResponseEntity<?> getProfile(Authentication auth) {
 
         String email = auth.getName();
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND)));
+        Optional<User> userOpt = userRepository.findByEmail(email);
 
-        return localSellerService.getSellerProfile(user.getId());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body((messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND)));
+        }
+
+        SellerDTO seller = localSellerService.getSellerProfile(userOpt.get().getId());
+
+        return ResponseEntity.ok(seller);
     }
 
     @PutMapping("/profile")
-    public SellerDTO updateProfile(Authentication auth, @RequestBody UpdateSellerDTO dto) {
+    public ResponseEntity<?> updateProfile(Authentication auth, @RequestBody UpdateSellerDTO dto) {
 
         String email = auth.getName();
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND)));
+        Optional<User> userOpt = userRepository.findByEmail(email);
 
-        return localSellerService.updateSellerProfile(user.getId(), dto);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404)
+                    .body(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND));
+        }
+
+        SellerDTO updatedSeller = localSellerService
+                .updateSellerProfile(userOpt.get().getId(), dto);
+
+        return ResponseEntity.ok(updatedSeller);
     }
 
 }

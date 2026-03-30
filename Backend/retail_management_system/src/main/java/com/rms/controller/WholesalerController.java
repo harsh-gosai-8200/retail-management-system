@@ -9,6 +9,7 @@ import com.rms.service.MessageService;
 import com.rms.service.WholesalerService;
 import com.rms.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,16 +23,20 @@ public class WholesalerController {
     private final MessageService messageService;
 
     @GetMapping("/profile")
-    public WholesalerDTO getProfile(Authentication authentication) {
+    public ResponseEntity<WholesalerDTO> getProfile(Authentication authentication) {
         User user = getAuthenticatedUser(authentication);
-        return wholesalerService.getProfile(user.getId());
+        WholesalerDTO profile = wholesalerService.getProfile(user.getId());
+        return ResponseEntity.ok(profile);
     }
 
     @PutMapping("/profile")
-    public WholesalerDTO updateProfile(Authentication authentication,
-                                       @RequestBody UpdateWholesalerDTO updateDTO) {
+    public ResponseEntity<WholesalerDTO> updateProfile(
+            Authentication authentication,
+            @RequestBody UpdateWholesalerDTO updateDTO) {
+
         User user = getAuthenticatedUser(authentication);
-        return wholesalerService.updateProfile(user.getId(), updateDTO);
+        WholesalerDTO updated = wholesalerService.updateProfile(user.getId(), updateDTO);
+        return ResponseEntity.ok(updated);
     }
 
     /**

@@ -110,113 +110,123 @@ export function WholesalersPage() {
     );
   }
 
+  function statusbar(status?: SubscriptionStatus) {
+  switch (status) {
+    case "APPROVED":
+      return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+    case "PENDING":
+      return "bg-amber-50 text-amber-700 border border-amber-200";
+    case "REJECTED":
+      return "bg-red-50 text-red-600 border border-red-200";
+    case "INACTIVE":
+      return "bg-slate-100 text-slate-600 border border-slate-200";
+    default:
+      return "bg-slate-100 text-slate-600 border border-slate-200";
+  }
+}
+
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-semibold text-slate-900">Available Wholesalers</h1>
-        <p className="text-sm text-slate-500">Browse and subscribe to wholesalers.</p>
+        <h1 className="text-3xl font-semibold text-slate-900">
+          Wholesalers
+        </h1>
+        <p className="text-sm text-slate-500">
+          Browse and manage your subscriptions.
+        </p>
       </header>
 
       <section className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
         <table className="min-w-full text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-              <th className="px-4 py-3 font-medium">Username</th>
-              <th className="px-4 py-3 font-medium">Business Name</th>
+              <th className="px-4 py-3 font-medium">Wholesaler</th>
+              <th className="px-4 py-3 font-medium">Business</th>
+              <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
+
           <tbody>
-            {wholesalers.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-slate-500">
-                  No wholesalers found
+            {wholesalers.map((w) => (
+              <tr
+                key={w.id}
+                className="border-b last:border-b-0 hover:bg-slate-50/70 transition"
+              >
+                <td className="px-4 py-3 font-medium text-slate-900">
+                  {w.username}
                 </td>
-              </tr>
-            ) : (
-              wholesalers.map((w) => (
-                <tr
-                  key={w.id}
-                  className="border-b last:border-b-0 hover:bg-slate-50 transition"
-                >
-                  <td className="px-4 py-3 font-medium text-slate-900">{w.username}</td>
-                  <td className="px-4 py-3 text-slate-600">{w.businessName}</td>
-                  <td className="px-4 py-3 flex justify-end items-center gap-2">
-                    {/* View Products always visible */}
+
+                <td className="px-4 py-3 text-slate-600">
+                  {w.businessName}
+                </td>
+
+                <td className="px-4 py-3">
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusbar(statuses[w.id])}`}>
+                    {statuses[w.id] || "NONE"}
+                  </span>
+                </td>
+
+                <td className="px-4 py-3">
+                  <div className="flex justify-end gap-2">
                     <Link
                       to={`/local-seller/wholesaler/${w.id}`}
-                      className="text-blue-600 text-sm font-medium hover:underline"
+                      className="flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 transition"
                     >
-                      View Products
+                      View
                     </Link>
 
-                    {/* NOT SUBSCRIBED */}
+                    {/* Buttons same logic but cleaner */}
                     {(!statuses[w.id] || statuses[w.id] === "NONE") && (
                       <button
                         onClick={() => handleSubscribe(w.id)}
-                        className="flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50/30 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50/50 transition"
+                        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-100"
                       >
-                        <UserPlus className="h-4 w-4" />
                         Subscribe
                       </button>
                     )}
 
-                    {/* PENDING */}
                     {statuses[w.id] === "PENDING" && (
                       <>
-                        <button
-                          disabled
-                          className="flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50/20 px-3 py-1.5 text-sm text-amber-600 cursor-not-allowed opacity-80"
-                        >
-                          <Clock className="h-4 w-4" />
+                        <span className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm text-amber-700">
                           Pending
-                        </button>
-
+                        </span>
                         <button
                           onClick={() => handleCancel(w.id)}
-                          className="flex items-center gap-1 rounded-lg border border-red-200 bg-red-50/20 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50/30 transition"
+                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm text-red-600 hover:bg-red-100"
                         >
-                          <XCircle className="h-4 w-4" />
                           Cancel
                         </button>
                       </>
                     )}
 
-                    {/* APPROVED */}
                     {statuses[w.id] === "APPROVED" && (
                       <>
-                        <button
-                          disabled
-                          className="flex items-center gap-1 rounded-lg border border-green-200 bg-green-50/20 px-3 py-1.5 text-sm text-green-600 cursor-not-allowed opacity-80"
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
+                        <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm text-emerald-700">
                           Subscribed
-                        </button>
-
+                        </span>
                         <button
                           onClick={() => handleUnsubscribe(w.id)}
-                          className="flex items-center gap-1 rounded-lg border border-red-200 bg-red-50/20 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50/30 transition"
+                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm text-red-600 hover:bg-red-100"
                         >
-                          <XCircle className="h-4 w-4" />
                           Unsubscribe
                         </button>
                       </>
                     )}
 
-                    {/* REJECTED / INACTIVE */}
-                    {(statuses[w.id] === "REJECTED" || statuses[w.id] === "INACTIVE") && (
+                    {(statuses[w.id] === "REJECTED" ||
+                      statuses[w.id] === "INACTIVE") && (
                       <button
                         onClick={() => handleSubscribe(w.id)}
-                        className="flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50/30 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50/50 transition"
+                        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-100"
                       >
-                        <Repeat className="h-4 w-4" />
-                        Subscribe Again
+                        Retry
                       </button>
                     )}
-                  </td>
-                </tr>
-              ))
-            )}
+                  </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </section>

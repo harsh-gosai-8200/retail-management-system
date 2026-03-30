@@ -388,7 +388,6 @@ public class WholesalerSalesmanServiceImpl implements WholesalerSalesmanService 
         return SellerDTO.builder()
                 .id(seller.getId())
                 .shopName(seller.getShopName())
-                .ownerName(seller.getUser().getUsername())
                 .phone(seller.getUser().getPhone())
                 .address(seller.getAddress())
                 .isActive(seller.getUser().getIsActive())

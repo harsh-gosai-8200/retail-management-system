@@ -2,7 +2,10 @@ package com.rms.service;
 
 import com.rms.constants.MessageKeys;
 import com.rms.dto.ProductDTO;
+import com.rms.dto.SellerDTO;
+import com.rms.dto.UpdateSellerDTO;
 import com.rms.dto.WholesalerDTO;
+import com.rms.exception.ResourceNotFoundException;
 import com.rms.model.*;
 import com.rms.model.enums.SubscriptionStatus;
 import com.rms.repository.*;
@@ -51,6 +54,10 @@ public class LocalSellerServiceImpl implements LocalSellerService {
     // Get all active products of a wholesaler
     @Override
     public List<ProductDTO> getActiveProductsByWholesaler(Long wholesalerId) {
+
+        if (!wholesalerRepository.existsById(wholesalerId)) {
+            throw new ResourceNotFoundException(messageService.get(MessageKeys.WHOLESALER_NOT_FOUND));
+        }
         log.info("Fetching all active products for wholesaler ID: {}", wholesalerId);
 
         if (!wholesalerRepository.existsById(wholesalerId)) {
@@ -73,7 +80,7 @@ public class LocalSellerServiceImpl implements LocalSellerService {
         log.info("Fetching subscribed wholesalers for local seller ID: {}", localSellerId);
 
         if (!localSellerRepository.existsById(localSellerId)) {
-            throw new RuntimeException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND));
+            throw new ResourceNotFoundException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND));
         }
 
         Specification<WholesalerSellerMapping> spec =
@@ -104,7 +111,7 @@ public class LocalSellerServiceImpl implements LocalSellerService {
                         .and(WholesalerSellerSpecification.byStatus(SubscriptionStatus.APPROVED));
 
         if (!mappingRepository.exists(subscriptionSpec)) {
-            throw new RuntimeException(messageService.get(MessageKeys.WHOLESALER_NOT_MAPPED));
+            throw new ResourceNotFoundException(messageService.get(MessageKeys.WHOLESALER_NOT_MAPPED));
         }
 
         Specification<Product> productSpec = ProductSpecification.withFilters(
@@ -127,14 +134,14 @@ public class LocalSellerServiceImpl implements LocalSellerService {
 
         // Fetch local seller and wholesaler from DB
         LocalSeller localSeller = localSellerRepository.findById(localSellerId)
-                .orElseThrow(() -> new RuntimeException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND)));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND)));
 
         Wholesaler wholesaler = wholesalerRepository.findById(wholesalerId)
-                .orElseThrow(() -> new RuntimeException(messageService.get(MessageKeys.WHOLESALER_NOT_FOUND)));
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.get(MessageKeys.WHOLESALER_NOT_FOUND)));
 
         // Check if wholesaler is active
         if (!wholesaler.getIsActive()) {
-            throw new RuntimeException(messageService.get(MessageKeys.WHOLESALER_INACTIVE));
+            throw new ResourceNotFoundException(messageService.get(MessageKeys.WHOLESALER_INACTIVE));
         }
 
         //  Check if mapping already exists
@@ -275,7 +282,7 @@ public class LocalSellerServiceImpl implements LocalSellerService {
 
     private ProductDTO mapToProductDTO(Product product) {
         ProductDTO dto = modelMapper.map(product, ProductDTO.class);
-        
+
         if (product.getWholesaler() != null) {
             dto.setWholesalerId(product.getWholesaler().getId());
             dto.setWholesalerName(product.getWholesaler().getBusinessName());
@@ -293,6 +300,14 @@ public class LocalSellerServiceImpl implements LocalSellerService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public SellerDTO getSellerProfile(Long userId) {
+        LocalSeller seller = localSellerRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND)));
+
+        return mapToDTO(seller);
+    }
+
     public WholesalerDTO fromEntity(Wholesaler wholesaler) {
         return WholesalerDTO.builder()
                 .id(wholesaler.getId())
@@ -302,5 +317,46 @@ public class LocalSellerServiceImpl implements LocalSellerService {
                 .isActive(wholesaler.getIsActive())
                 .username(wholesaler.getUser() != null ? wholesaler.getUser().getUsername() : null)
                 .build();
+    }
+
+    // get profile
+    private SellerDTO mapToDTO(LocalSeller seller) {
+        return SellerDTO.builder()
+                .id(seller.getId())
+
+                // USER fields
+                .username(seller.getUser().getUsername())
+                .email(seller.getUser().getEmail())
+                .phone(seller.getUser().getPhone())
+
+                // SELLER fields
+                .shopName(seller.getShopName())
+                .address(seller.getAddress())
+
+                .isActive(seller.getUser().getIsActive())
+                .build();
+    }
+
+
+    @Override
+    public SellerDTO updateSellerProfile(Long userId, UpdateSellerDTO dto) {
+        LocalSeller seller = localSellerRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(messageService.get(MessageKeys.LOCAL_SELLER_NOT_FOUND)));
+
+        User user = seller.getUser();
+
+        // Update User fields
+        if (dto.getUsername() != null) user.setUsername(dto.getUsername());
+        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+        if (dto.getEmail()!=null) user.setEmail(dto.getEmail());
+
+        // Update Seller fields
+        if (dto.getShopName() != null) seller.setShopName(dto.getShopName());
+        if (dto.getAddress() != null) seller.setAddress(dto.getAddress());
+
+        // Save
+        localSellerRepository.save(seller);
+
+        return mapToDTO(seller);
     }
 }

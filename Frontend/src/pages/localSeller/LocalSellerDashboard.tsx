@@ -237,87 +237,95 @@ export function LocalSellerDashboard() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-lg border bg-white p-6 shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-500">{card.label}</p>
-                <p className="mt-2 text-2xl font-bold text-slate-900">
-                  {card.value}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">{card.helper}</p>
-              </div>
-              <div className={`rounded-lg p-3 ${card.color}`}>
-                <card.icon className="h-6 w-6" />
-              </div>
+    {/* Stats */}
+    <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {statCards.map((card) => (
+        <article
+          key={card.label}
+          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <div className="flex justify-between">
+            <div>
+              <p className="text-xs uppercase text-slate-500">{card.label}</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-900">
+                {card.value}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">{card.helper}</p>
+            </div>
+            <div className={`rounded-xl p-2 ${card.color}`}>
+              <card.icon className="h-5 w-5" />
             </div>
           </div>
-        ))}
-      </div>
+        </article>
+      ))}
+    </section>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <button
-          onClick={() => navigate("/local-seller/wholesalers")}
-          className="group rounded-lg border bg-white p-6 text-left shadow-sm hover:border-blue-300 hover:shadow-md"
-        >
-          <Store className="h-8 w-8 text-blue-600" />
-          <h3 className="mt-4 text-lg font-semibold text-slate-900">
-            Browse Wholesalers
-          </h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Discover and subscribe to wholesalers
-          </p>
-          <ArrowRight className="mt-4 h-5 w-5 text-slate-400 group-hover:text-blue-600" />
-        </button>
+    {/* Quick Actions */}
+    <section className="grid gap-4 md:grid-cols-2">
+      <button
+        onClick={() => navigate("/local-seller/wholesalers")}
+        className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md hover:border-blue-300"
+      >
+        <Store className="h-8 w-8 text-blue-600" />
+        <h3 className="mt-4 text-lg font-semibold text-slate-900">
+          Browse Wholesalers
+        </h3>
+        <p className="mt-1 text-sm text-slate-500">
+          Discover and subscribe to wholesalers
+        </p>
+        <ArrowRight className="mt-4 h-5 w-5 text-slate-400 group-hover:text-blue-600" />
+      </button>
 
-        <button
-          onClick={() => navigate("/local-seller/subscriptions")}
-          className="group rounded-lg border bg-white p-6 text-left shadow-sm hover:border-blue-300 hover:shadow-md"
-        >
-          <Package className="h-8 w-8 text-blue-600" />
-          <h3 className="mt-4 text-lg font-semibold text-slate-900">
-            My Subscriptions
-          </h3>
-          <p className="mt-1 text-sm text-slate-500">
-            View your subscribed wholesalers
-          </p>
-          <ArrowRight className="mt-4 h-5 w-5 text-slate-400 group-hover:text-blue-600" />
-        </button>
-      </div>
+      <button
+        onClick={() => navigate("/local-seller/subscriptions")}
+        className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md hover:border-blue-300"
+      >
+        <Package className="h-8 w-8 text-blue-600" />
+        <h3 className="mt-4 text-lg font-semibold text-slate-900">
+          My Subscriptions
+        </h3>
+        <p className="mt-1 text-sm text-slate-500">
+          View your subscribed wholesalers
+        </p>
+        <ArrowRight className="mt-4 h-5 w-5 text-slate-400 group-hover:text-blue-600" />
+      </button>
+    </section>
 
-      <div className="rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
-          Recent Wholesalers
-        </h2>
-        <div className="mt-4 space-y-3">
-          {wholesalers.slice(0, 3).map((w) => (
-            <div
-              key={w.id}
-              className="flex items-center justify-between rounded-lg border p-3 hover:bg-slate-50"
-            >
-              <div>
-                <p className="font-medium text-slate-900">
-                  {w.businessName || w.name}
-                </p>
-                <p className="text-xs text-slate-500">{w.email}</p>
-              </div>
-              <Link
-                to={`/local-seller/wholesalers`}
-                className="text-blue-600 text-sm font-medium hover:underline"
-              >
-                View wholesaler
-              </Link>
+    {/* Recent */}
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-sm font-semibold text-slate-900">
+        Recent Wholesalers
+      </h2>
+
+      <div className="mt-4 space-y-3">
+        {wholesalers.slice(0, 3).map((w) => (
+          <div
+            key={w.id}
+            className="flex justify-between items-center rounded-lg border border-slate-100 px-3 py-2 hover:bg-slate-50"
+          >
+            <div>
+              <p className="font-medium text-slate-900">
+                {w.businessName || w.name}
+              </p>
+              <p className="text-xs text-slate-500">{w.email}</p>
             </div>
-          ))}
-          {wholesalers.length === 0 && (
-            <p className="text-sm text-slate-500">No wholesalers available</p>
-          )}
-        </div>
+
+            <Link
+              to="/local-seller/wholesalers"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
+              View
+            </Link>
+          </div>
+        ))}
+
+        {wholesalers.length === 0 && (
+          <p className="text-sm text-slate-500">
+            No wholesalers available
+          </p>
+        )}
       </div>
-    </div>
-  );
+    </section>
+  </div>
+);
 }

@@ -3,6 +3,7 @@ package com.rms.service;
 import com.rms.dto.*;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface SalesmanSelfService {
@@ -24,4 +25,8 @@ public interface SalesmanSelfService {
     SalesmanDashboardDTO getMyDashboardStats(Long salesmanId);
 
     List<SalesmanOrderDTO> getSellerOrders(Long salesmanId, Long sellerId, String status);
+
+    DeliveryResponseDTO collectCashPayment(Long salesmanId, Long orderId, BigDecimal amountCollected);
+
+    PaginatedResponseDTO<SalesmanOrderDTO> getOrdersBySalesmanId(Long salesmanId, String status, Pageable pageable);
 }

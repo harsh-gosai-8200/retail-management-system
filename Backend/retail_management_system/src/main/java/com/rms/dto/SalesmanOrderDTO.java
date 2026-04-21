@@ -24,4 +24,8 @@ public class SalesmanOrderDTO {
     private String deliveryAddress;
     private Integer itemCount;
     private List<SalesmanOrderItemDTO> items;
+    private String paymentMethod;
+    private String paymentStatus;
+    private String transactionId;
+    private LocalDateTime deliveredAt;
 }

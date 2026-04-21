@@ -57,8 +57,12 @@ public class Order {
     private OrderStatus status = OrderStatus.PENDING;
 
     private String paymentMethod;
-    private String paymentStatus = "PENDING";
+
+    @Column(name = "transaction_id")
     private String transactionId;
+
+    @Column(name = "payment_status")
+    private String paymentStatus = "PENDING";
 
     private String deliveryAddress;
     private String deliveryInstructions;

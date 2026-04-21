@@ -60,7 +60,14 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setSubtotal(order.getSubtotal());
         invoice.setTaxAmount(order.getTaxAmount());
         invoice.setTotalAmount(order.getTotalAmount());
-        invoice.setStatus("GENERATED");
+        if ("PAID".equals(order.getPaymentStatus())) {
+            invoice.setStatus("PAID");
+            invoice.setPaidAt(order.getUpdatedAt());
+            log.info("Invoice marked as PAID for online payment order: {}", orderId);
+        } else {
+            invoice.setStatus("GENERATED");
+            log.info("Invoice marked as GENERATED for COD order: {}", orderId);
+        }
         invoice.setGeneratedAt(LocalDateTime.now());
 
         Invoice savedInvoice = invoiceRepository.save(invoice);
@@ -125,7 +132,6 @@ public class InvoiceServiceImpl implements InvoiceService {
         long total = invoiceRepository.count(sellerSpec);
         long pending = invoiceRepository.count(sellerSpec.and(InvoiceSpecification.byStatus("PENDING")));
         long paid = invoiceRepository.count(sellerSpec.and(InvoiceSpecification.byStatus("PAID")));
-        long overdue = invoiceRepository.count(sellerSpec.and(InvoiceSpecification.byStatus("OVERDUE")));
 
         // Calculate total amount (sum of all invoices)
         Double totalAmount = invoiceRepository.findAll(sellerSpec).stream()
@@ -136,7 +142,6 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .total(total)
                 .pending(pending)
                 .paid(paid)
-                .overdue(overdue)
                 .totalAmount(totalAmount)
                 .build();
     }

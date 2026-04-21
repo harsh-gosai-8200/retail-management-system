@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -90,7 +91,7 @@ public class SalesmanSelfController {
      * @return
      */
     @GetMapping("/orders/{orderId}")
-    @PreAuthorize("hasRole('SALESMAN')")
+    @PreAuthorize("hasAnyRole('SALESMAN','ADMIN')")
     public ResponseEntity<SalesmanOrderDTO> getOrderDetails(
             @RequestParam(required = false) Long salesmanId,
             @PathVariable Long orderId) {
@@ -168,5 +169,40 @@ public class SalesmanSelfController {
         return ResponseEntity.ok(
                 salesmanService.getSellerOrders(salesmanId, sellerId, status)
         );
+    }
+
+    /**
+     * collecting cash payment from local seller if it was cash on delivery
+     * @param salesmanId
+     * @param orderId
+     * @param amountCollected
+     * @return
+     */
+    @PostMapping("/orders/{orderId}/collect-cash")
+    @PreAuthorize("hasRole('SALESMAN')")
+    public ResponseEntity<DeliveryResponseDTO> collectCashPayment(
+            @RequestParam(required = false) Long salesmanId,
+            @PathVariable Long orderId,
+            @RequestParam BigDecimal amountCollected) {
+        DeliveryResponseDTO response = salesmanService.collectCashPayment(salesmanId, orderId, amountCollected);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * getting salesman delivered orders for admin
+     * @param salesmanId
+     * @param status
+     * @param pageable
+     * @return
+     */
+    @GetMapping("/salesman/{salesmanId}/delivered-orders")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PaginatedResponseDTO<SalesmanOrderDTO>> getSalesmanDeliveredOrders(
+            @PathVariable Long salesmanId,
+            @RequestParam(required = false) String status,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+
+        return ResponseEntity.ok(salesmanService.getOrdersBySalesmanId(salesmanId, "DELIVERED", pageable));
     }
 }

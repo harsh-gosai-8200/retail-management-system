@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 @Builder
 public class TopSellerDTO {
     private Long sellerId;
+    private String sellerName;
     private String shopName;
     private String ownerName;
     private String phone;

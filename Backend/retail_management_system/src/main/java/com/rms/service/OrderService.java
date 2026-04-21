@@ -40,6 +40,7 @@ public class OrderService {
     private final LocalSellerRepository localSellerRepository;
     private final WholesalerRepository wholesalerRepository;
     private final ModelMapper modelMapper;
+    private final SystemLogService systemLogService;
 
     private static final BigDecimal TAX_RATE = new BigDecimal("0.05");
 
@@ -129,6 +130,13 @@ public class OrderService {
 
         log.info("Final order has {} items", savedOrder.getItems().size());
         OrderResponseDTO response = mapToDTO(savedOrder);
+        systemLogService.saveLog(
+                seller.getUser().getId(),
+                "ORDER_PLACED",
+                "ORDER",
+                savedOrder.getId(),
+                String.format("Order %s placed for ₹%.2f", savedOrder.getOrderNumber(), savedOrder.getTotalAmount())
+        );
         log.info("Response DTO has {} items", response.getItems().size());
 
         return response;
@@ -227,6 +235,14 @@ public class OrderService {
 
         order.setStatus(OrderStatus.CANCELLED);
         Order cancelledOrder = orderRepository.save(order);
+
+        systemLogService.saveLog(
+                seller.getUser().getId(),
+                "ORDER_CANCELLED",
+                "ORDER",
+                orderId,
+                String.format("Order %s cancelled", order.getOrderNumber())
+        );
 
         return mapToDTO(cancelledOrder);
     }

@@ -29,6 +29,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final JwtProperties jwtProperties;
+    private final SystemLogService systemLogService;
 
     @Transactional
     public String register(RegisterRequestDTO request) {
@@ -80,6 +81,14 @@ public class AuthService {
             salesmanRepository.save(salesman);
         }
 
+        systemLogService.saveLog(
+                savedUser.getId(),
+                "USER_REGISTERED",
+                "USER",
+                savedUser.getId(),
+                String.format("New user registered: %s as %s", savedUser.getUsername(), request.getRole())
+        );
+
         return REGISTRATION_SUCCESSFUL + request.getUsername();
     }
 
@@ -127,7 +136,17 @@ public class AuthService {
             if (salesman != null) {
                 roleId = salesman.getId();
             }
+        }else if (user.getRole() == Role.ADMIN) {
+            roleId = user.getId();
         }
+
+        systemLogService.saveLog(
+                user.getId(),
+                "LOGIN_SUCCESS",
+                "USER",
+                user.getId(),
+                String.format("User %s logged in successfully", user.getUsername())
+        );
 
         // 4. Return response with username
         return LoginResponceDTO.builder()

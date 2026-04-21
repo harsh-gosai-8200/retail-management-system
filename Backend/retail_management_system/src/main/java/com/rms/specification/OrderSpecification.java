@@ -40,6 +40,59 @@ public class OrderSpecification {
                 criteriaBuilder.equal(root.get(STATUS), status);
     }
 
+    public static Specification<Order> createdAfter(LocalDateTime date) {
+        return (root, query, cb) -> {
+            if (date == null) return cb.conjunction();
+            return cb.greaterThanOrEqualTo(root.get("createdAt"), date);
+        };
+    }
+
+    public static Specification<Order> createdBefore(LocalDateTime date) {
+        return (root, query, cb) -> {
+            if (date == null) return cb.conjunction();
+            return cb.lessThanOrEqualTo(root.get("createdAt"), date);
+        };
+    }
+
+    public static Specification<Order> deliveredBySalesman(Long salesmanId) {
+        return (root, query, cb) -> {
+            if (salesmanId == null) return cb.conjunction();
+            // Assumes Order has deliveredBySalesmanId field
+            return cb.equal(root.get("deliveredBySalesmanId"), salesmanId);
+        };
+    }
+
+    public static Specification<Order> byUserId(Long userId) {
+        return (root, query, cb) -> {
+            if (userId == null) return cb.conjunction();
+            // First try to find by seller user ID
+            return cb.equal(root.get("seller").get("user").get("id"), userId);
+        };
+    }
+
+    public static Specification<Order> byPaymentStatus(String paymentStatus) {
+        return (root, query, cb) -> {
+            if (!StringUtils.hasText(paymentStatus)) return cb.conjunction();
+            return cb.equal(root.get("paymentStatus"), paymentStatus);
+        };
+    }
+
+    public static Specification<Order> createdBetween(LocalDateTime startDate, LocalDateTime endDate) {
+        return (root, query, cb) -> {
+            if (startDate == null && endDate == null) {
+                return cb.conjunction();
+            }
+            if (startDate != null && endDate != null) {
+                return cb.between(root.get("createdAt"), startDate, endDate);
+            } else if (startDate != null) {
+                return cb.greaterThanOrEqualTo(root.get("createdAt"), startDate);
+            } else if (endDate != null) {
+                return cb.lessThanOrEqualTo(root.get("createdAt"), endDate);
+            }
+            return cb.conjunction();
+        };
+    }
+
 
     public static Specification<Order> search(String searchTerm) {
         return (root, query, criteriaBuilder) -> {

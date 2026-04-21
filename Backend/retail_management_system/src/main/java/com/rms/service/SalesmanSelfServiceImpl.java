@@ -4,6 +4,8 @@ import com.rms.dto.*;
 import com.rms.exception.ResourceNotFoundException;
 import com.rms.model.*;
 import com.rms.model.enums.OrderStatus;
+import com.rms.model.enums.PaymentMethod;
+import com.rms.model.enums.PaymentStatus;
 import com.rms.repository.*;
 import com.rms.specification.SalesmanAssignmentSpecification;
 import com.rms.specification.SalesmanOrderSpecification;
@@ -37,6 +39,8 @@ public class SalesmanSelfServiceImpl implements SalesmanSelfService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final InvoiceService invoiceService;
+    private final InvoiceRepository invoiceRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
 
     /**
      * Fetch salesman profile data to show on profile
@@ -456,6 +460,122 @@ public class SalesmanSelfServiceImpl implements SalesmanSelfService {
     }
 
     /**
+     * collecting cash payment for salesman if delivery is cash on delivery
+     * @param salesmanId
+     * @param orderId
+     * @param amountCollected
+     * @return
+     */
+    @Override
+    @Transactional
+    public DeliveryResponseDTO collectCashPayment(Long salesmanId, Long orderId, BigDecimal amountCollected) {
+        log.info("Collecting cash payment for order: {}", orderId);
+
+        List<Long> sellerIds = getAssignedSellerIds(salesmanId);
+
+        if (sellerIds.isEmpty()) {
+            throw new IllegalArgumentException(NO_ASSIGN_SELLER_FOUND);
+        }
+
+        Specification<Order> spec =
+                Specification.where(SalesmanOrderSpecification.bySellerIds(sellerIds))
+                        .and((root, query, cb) -> cb.equal(root.get("id"), orderId))
+                        .and((root, query, cb) -> cb.equal(root.get("status"), OrderStatus.DELIVERED));
+
+        Order order = orderRepository.findOne(spec)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Order not found or not delivered"
+                ));
+
+        if ("PAID".equals(order.getPaymentStatus())) {
+            throw new IllegalArgumentException("Payment already collected for this order");
+        }
+
+        if (amountCollected.compareTo(order.getTotalAmount()) != 0) {
+            throw new IllegalArgumentException(
+                    "Amount collected does not match order total. Expected: " + order.getTotalAmount()
+            );
+        }
+
+        order.setPaymentStatus("PAID");
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
+
+        Invoice invoice = invoiceRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found"));
+
+        invoice.setStatus("PAID");
+        invoice.setPaidAt(LocalDateTime.now());
+        invoiceRepository.save(invoice);
+
+        PaymentTransaction transaction = new PaymentTransaction();
+        transaction.setOrder(order);
+        transaction.setAmount(amountCollected);
+        transaction.setCurrency("INR");
+        transaction.setStatus(PaymentStatus.SUCCESS);
+        transaction.setPaymentMethod(PaymentMethod.CASH);
+        transaction.setPaidAt(LocalDateTime.now());
+        paymentTransactionRepository.save(transaction);
+
+        log.info("Cash payment collected for order: {}", orderId);
+
+        return DeliveryResponseDTO.builder()
+                .orderId(order.getId())
+                .orderNumber(order.getOrderNumber())
+                .status(String.valueOf(OrderStatus.DELIVERED))
+                .deliveredAt(order.getDeliveredAt())
+                .message("Cash payment collected successfully")
+                .build();
+    }
+
+    /**
+     * getting all order assign to/deliverd by salesman
+     * @param salesmanId
+     * @param status
+     * @param pageable
+     * @return
+     */
+    @Override
+    public PaginatedResponseDTO<SalesmanOrderDTO> getOrdersBySalesmanId(Long salesmanId, String status, Pageable pageable) {
+        log.info("Fetching orders for salesman ID: {} with status: {}", salesmanId, status);
+
+        List<Long> sellerIds = getAssignedSellerIds(salesmanId);
+
+        if (sellerIds.isEmpty()) {
+            return PaginatedResponseDTO.<SalesmanOrderDTO>builder()
+                    .content(List.of())
+                    .currentPage(0)
+                    .totalItems(0)
+                    .totalPages(0)
+                    .pageSize(pageable.getPageSize())
+                    .last(true)
+                    .build();
+        }
+
+        Specification<Order> spec = SalesmanOrderSpecification.withFilters(sellerIds, status, null, null);
+
+        Page<Order> page = orderRepository.findAll(spec, pageable);
+
+        List<SalesmanOrderDTO> content = page.getContent().stream()
+                .map(order -> {
+                    List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+                    order.getItems().clear();
+                    order.getItems().addAll(items);
+                    return mapToSalesmanOrderDTO(order);
+                })
+                .collect(Collectors.toList());
+
+        return PaginatedResponseDTO.<SalesmanOrderDTO>builder()
+                .content(content)
+                .currentPage(page.getNumber())
+                .totalItems(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .pageSize(page.getSize())
+                .last(page.isLast())
+                .build();
+    }
+
+    /**
      * Helper method for find all assign seller ids
      * @param salesmanId
      * @return
@@ -514,6 +634,10 @@ public class SalesmanSelfServiceImpl implements SalesmanSelfService {
                 .deliveryAddress(order.getDeliveryAddress())
                 .itemCount(order.getItems().size())
                 .items(items)
+                .paymentMethod(order.getPaymentMethod())
+                .paymentStatus(order.getPaymentStatus())
+                .transactionId(order.getTransactionId())
+                .deliveredAt(order.getDeliveredAt())
                 .build();
     }
 }

@@ -13,7 +13,8 @@ import {
   XCircle,
   Loader2,
   AlertCircle,
-  Camera
+  Camera,
+  IndianRupee
 } from 'lucide-react';
 import { salesmanSelfService } from '../../services/salesmanSelfService';
 import { OrderStatusBadge } from './component/OrderStatusBadge';
@@ -45,6 +46,9 @@ export function DeliverOrderPage() {
     receiverPhone: '',
     deliveryPhoto: '',
   });
+  const [isCOD, setIsCOD] = useState(false);
+  const [amountCollected, setAmountCollected] = useState<number>(0);
+  const [cashCollected, setCashCollected] = useState(false);
 
   useEffect(() => {
     loadOrder();
@@ -54,8 +58,14 @@ export function DeliverOrderPage() {
     try {
       const data = await salesmanSelfService.getOrderDetails(parseInt(orderId!));
       setOrder(data);
+
+      const isCashOrder = data.paymentMethod === 'CASH';
+      setIsCOD(isCashOrder);
       
-      // Pre-fill receiver info with seller details for DELIVERED
+      // Pre-fill amount to collect
+      setAmountCollected(data.totalAmount);
+      
+      // Pre-fill receiver info
       setFormData(prev => ({
         ...prev,
         receiverName: data.sellerName,
@@ -80,8 +90,59 @@ export function DeliverOrderPage() {
     });
   };
 
+  const handleCODSubmit = async () => {
+    if (!order) return;
+    
+    if (!cashCollected) {
+      setError('Please confirm that you have collected the cash');
+      return;
+    }
+    
+    if (amountCollected !== order.totalAmount) {
+      setError(`Amount collected (₹${amountCollected}) does not match order total (₹${order.totalAmount})`);
+      return;
+    }
+    
+    
+    setSubmitting(true);
+    setError(null);
+    
+    try {
+      // Step 1: Mark as Delivered
+      await salesmanSelfService.markAsDelivered(parseInt(orderId!), {
+        status: 'DELIVERED',
+        notes: formData.notes,
+        receiverName: formData.receiverName,
+        receiverPhone: formData.receiverPhone,
+        deliveryPhoto: formData.deliveryPhoto || undefined,
+      });
+      
+      // Step 2: Collect cash payment
+      await salesmanSelfService.collectCashPayment(
+        parseInt(orderId!),
+        amountCollected
+      );
+      
+      setSuccess('Order delivered and payment collected successfully!');
+      setTimeout(() => {
+        navigate(`/salesman/orders/${orderId}`);
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isCOD && formData.status === 'DELIVERED') {
+      handleCODSubmit();
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -111,7 +172,7 @@ export function DeliverOrderPage() {
       
       // Redirect back to order details after 2 seconds
       setTimeout(() => {
-        navigate(`/salesman/orders/${orderId}`);
+        navigate(`/salesman/orders/${orderId}`, { state: { from: 'deliver' } });
       }, 2000);
     } catch (err: any) {
       setError(err.message);
@@ -178,6 +239,16 @@ export function DeliverOrderPage() {
                 <Store className="inline h-3 w-3 mr-1" />
                 {order.sellerShop} · {order.itemCount} items · ₹{order.totalAmount.toLocaleString()}
               </p>
+              {order.paymentMethod === 'CASH' && (
+                <p className="mt-1 text-xs text-yellow-600 bg-yellow-50 inline-block px-2 py-0.5 rounded-full">
+                  Cash on Delivery
+                </p>
+              )}
+              {order.paymentMethod === 'UPI' && (
+                <p className="mt-1 text-xs text-green-600 bg-green-50 inline-block px-2 py-0.5 rounded-full">
+                  Online Payment
+                </p>
+              )}
             </div>
           </div>
           <OrderStatusBadge status={order.status} />
@@ -231,6 +302,57 @@ export function DeliverOrderPage() {
                 <option value="RETURNED">↩Returned</option>
               </select>
             </div>
+
+            {/* COD Specific - Cash Collection Section */}
+            {isCOD && isDelivered && (
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <IndianRupee className="h-5 w-5 text-yellow-600" />
+                  <h4 className="font-medium text-yellow-800">Cash Collection</h4>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">
+                      Amount to Collect
+                    </label>
+                    <p className="mt-1 text-lg font-bold text-yellow-700">
+                      ₹{order.totalAmount.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">
+                      Amount Collected
+                    </label>
+                    <input
+                      type="number"
+                      value={amountCollected}
+                      onChange={(e) => setAmountCollected(Number(e.target.value))}
+                      className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
+                      placeholder="Enter amount collected"
+                    />
+                    {amountCollected !== order.totalAmount && (
+                      <p className="mt-1 text-xs text-red-600">
+                        Amount should match order total: ₹{order.totalAmount.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <label className="flex items-center gap-2 mt-2">
+                    <input
+                      type="checkbox"
+                      checked={cashCollected}
+                      onChange={(e) => setCashCollected(e.target.checked)}
+                      className="h-4 w-4 text-yellow-600"
+                    />
+                    <span className="text-sm text-slate-700">
+                      I confirm that I have received ₹{order.totalAmount.toLocaleString()} from the seller
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
 
             {/* Receiver Name - Only for DELIVERED (matches backend DTO) */}
             {isDelivered && (

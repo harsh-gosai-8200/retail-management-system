@@ -58,6 +58,7 @@ export function LocalSellerDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const sellerId = user?.id;
+   const sellerCity = user?.city;
 
   const [wholesalers, setWholesalers] = useState<any[]>([]);
   const [subscribed, setSubscribed] = useState<any[]>([]);
@@ -83,7 +84,7 @@ export function LocalSellerDashboard() {
       setError(null);
 
       // Load all wholesalers
-      const allWholesalers = (await api.getWholesalers()) || [];
+      const allWholesalers = (await api.getWholesalers(sellerCity)) || [];
       setWholesalers(allWholesalers);
 
       // Load subscribed wholesalers safely
@@ -277,15 +278,15 @@ export function LocalSellerDashboard() {
       </button>
 
       <button
-        onClick={() => navigate("/local-seller/subscriptions")}
+        onClick={() => navigate("/local-seller/orders")}
         className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md hover:border-blue-300"
       >
         <Package className="h-8 w-8 text-blue-600" />
         <h3 className="mt-4 text-lg font-semibold text-slate-900">
-          My Subscriptions
+          My Orders
         </h3>
         <p className="mt-1 text-sm text-slate-500">
-          View your subscribed wholesalers
+          View your orders
         </p>
         <ArrowRight className="mt-4 h-5 w-5 text-slate-400 group-hover:text-blue-600" />
       </button>

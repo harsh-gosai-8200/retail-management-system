@@ -117,4 +117,9 @@ export const orderService = {
       { params: { wholesalerId } }
     );
   },
+
+  getOrderDetailsForAdmin: async (orderId: number): Promise<Order> => {
+    const response = await api.request<Order>(`/admin/orders/${orderId}`);
+    return response;
+  },
 };

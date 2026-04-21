@@ -42,6 +42,10 @@ export interface SalesmanOrder {
   deliveryAddress: string;
   itemCount: number;
   items?: SalesmanOrderItem[];
+  transactionId?: string;
+  paymentMethod?: string; 
+  paymentStatus?: string;
+  deliveredAt?: string;
 }
 
 export interface SalesmanOrderItem {
@@ -96,4 +100,5 @@ export interface PaginatedOrdersResponse {
   size: number;
   number: number;
   empty: boolean;
+  totalItems?: number;
 }

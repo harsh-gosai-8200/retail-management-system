@@ -216,6 +216,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return '/local-seller'
       case 'SALESMAN':
         return '/salesman'
+        case 'ADMIN':  
+      return '/admin'
       default:
         return '/auth/login'
     }

@@ -11,7 +11,10 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
-  Truck
+  Truck,
+  CreditCard,
+  IndianRupee,
+  Clock
 } from 'lucide-react';
 import { salesmanSelfService } from '../../services/salesmanSelfService';
 import { OrderStatusBadge } from './component/OrderStatusBadge'; 
@@ -59,12 +62,15 @@ export function OrderDetailPage() {
     );
   }
 
+  const isCOD = order.paymentMethod === 'CASH';
+  const isPaid = order.paymentStatus === 'PAID';
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/salesman/orders')}
           className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -88,6 +94,84 @@ export function OrderDetailPage() {
         </div>
 
         <div className="p-6">
+          <div className="mb-6 rounded-lg border p-4 bg-slate-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-5 w-5 text-slate-600" />
+                <h3 className="font-medium text-slate-900">Payment Information</h3>
+              </div>
+              {isCOD ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">
+                  <IndianRupee className="h-3 w-3" />
+                  Cash on Delivery
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
+                  <CreditCard className="h-3 w-3" />
+                  Online Payment
+                </span>
+              )}
+            </div>
+            
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-slate-500">Amount to Collect</p>
+                <p className="text-lg font-bold text-slate-900">
+                  ₹{order.totalAmount.toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Payment Status</p>
+                <div className="flex items-center gap-2 mt-1">
+                  {isPaid ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-700">Paid</span>
+                    </>
+                  ) : isCOD ? (
+                    <>
+                      <Clock className="h-4 w-4 text-yellow-600" />
+                      <span className="text-sm font-medium text-yellow-700">Pending (Collect on Delivery)</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <span className="text-sm font-medium text-red-700">Payment Pending</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Message for Salesman */}
+            {order.status === 'SHIPPED' && isCOD && !isPaid && (
+              <div className="mt-3 rounded-lg bg-yellow-50 p-3 text-sm text-yellow-800">
+                <div className="flex items-center gap-2">
+                  <IndianRupee className="h-4 w-4" />
+                  <span>This is a COD order. Remember to collect ₹{order.totalAmount.toLocaleString()} from the seller upon delivery.</span>
+                </div>
+              </div>
+            )}
+
+            {order.status === 'SHIPPED' && !isCOD && !isPaid && (
+              <div className="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-800">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  <span>This order has been paid online. No cash collection required. Just deliver the items.</span>
+                </div>
+              </div>
+            )}
+
+            {order.status === 'DELIVERED' && isCOD && !isPaid && (
+              <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Cash not yet collected! Please collect payment if not already done.</span>
+                </div>
+              </div>
+            )}
+          </div>
+          
           {/* Seller and Delivery Info */}
           <div className="mb-6 grid gap-6 md:grid-cols-2">
             <div>

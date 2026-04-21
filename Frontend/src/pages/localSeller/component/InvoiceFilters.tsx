@@ -21,7 +21,6 @@ export const InvoiceFilters: React.FC<Props> = ({
     { value: 'GENERATED', label: 'Generated' },
     { value: 'PENDING', label: 'Pending' },
     { value: 'PAID', label: 'Paid' },
-    { value: 'OVERDUE', label: 'Overdue' },
   ];
 
   const sortOptions = [

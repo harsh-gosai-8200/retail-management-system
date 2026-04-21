@@ -21,6 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { locationService } from '../../services/locationService';
 import { Button } from '../../components/ui/button';
 import type { ServiceCity, AddServiceCityRequest } from '../../types/location';
+import { useConfirm } from '../../context/ConfirmContext';
 
 interface StateData {
     id: number;
@@ -33,6 +34,7 @@ export function ServiceCitiesPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth();
+    const { confirm } = useConfirm();
     const wholesalerId = user?.id;
 
     const [serviceCities, setServiceCities] = useState<ServiceCity[]>([]);
@@ -163,7 +165,12 @@ export function ServiceCitiesPage() {
     };
 
     const removeServiceCity = async (cityId: number, cityName: string) => {
-        if (!confirm(`Remove ${cityName} from your service areas?`)) return;
+        const ok = await confirm(
+            `Remove ${cityName} from your service areas?`,
+            "danger"
+        );
+
+        if (!ok) return;
 
         setSaving(true);
         try {
@@ -422,8 +429,8 @@ export function ServiceCitiesPage() {
                                         <div
                                             key={city.id}
                                             className={`group flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all duration-150 ${isEditing
-                                                    ? 'bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100'
-                                                    : 'bg-slate-100 text-slate-700'
+                                                ? 'bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100'
+                                                : 'bg-slate-100 text-slate-700'
                                                 }`}
                                         >
                                             <MapPin className={`h-3.5 w-3.5 ${isEditing ? 'text-blue-500' : 'text-slate-500'}`} />

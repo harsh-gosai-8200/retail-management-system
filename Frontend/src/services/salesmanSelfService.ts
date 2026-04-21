@@ -99,4 +99,27 @@ export const salesmanSelfService = {
       params: { status, notes },
     });
   },
+
+  collectCashPayment: async (orderId: number, amountCollected: number): Promise<DeliveryResponse> => {
+    const salesmanId = getSalesmanId();
+    return api.request<DeliveryResponse>(`/salesman/orders/${orderId}/collect-cash?salesmanId=${salesmanId}&amountCollected=${amountCollected}`, {
+      method: 'POST',
+    });
+  },
+
+  getOrdersBySalesmanId: async (
+  salesmanId: number,
+  status?: string,
+  page: number = 0,
+  size: number = 10
+): Promise<PaginatedOrdersResponse> => {
+  const params: any = { salesmanId, page, size };
+  if (status) params.status = status;
+  const response = await api.request<PaginatedOrdersResponse>('/admin/salesman-orders', { params });
+  return response;
+},
+
+getOrderDetailsForAdmin: async (orderId: number, salesmanId: number): Promise<SalesmanOrder> => {
+  return api.request<SalesmanOrder>(`/salesman/orders/${orderId}?salesmanId=${salesmanId}`);
+},
 };

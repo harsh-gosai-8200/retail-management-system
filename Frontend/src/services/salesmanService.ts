@@ -88,7 +88,6 @@ export const salesmanService = {
       { params: { wholesalerId } }
     );
     
-    console.log('📥 Assigned sellers raw response:', response);
     
     if (response && response.content && Array.isArray(response.content)) {
       return response.content;

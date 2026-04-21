@@ -4,9 +4,6 @@ import {
   Package,
   Search,
   ShoppingBag,
-  ShoppingCart,
-  Trash2,
-  Lock,
 } from "lucide-react";
 import { api, type Product } from "../../services/api";
 import { Button } from "../../components/ui/button";
@@ -49,7 +46,6 @@ export function LocalSellerProductsPage() {
   const [subscriptionStatuses, setSubscriptionStatuses] = useState<
     Record<number, SubscriptionStatus>
   >({});
-  const [cart, setCart] = useState<Product[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -152,27 +148,8 @@ export function LocalSellerProductsPage() {
     setCategory("all");
   };
 
-  const addToCart = (product: Product) => {
-    if (cart.find((p) => p.id === product.id)) return;
-    setCart((prev) => [...prev, product]);
-  };
-
-  const removeFromCart = (product: Product) => {
-    if (!product.id) return;
-    setCart((prev) => prev.filter((p) => p.id !== product.id));
-  };
-
   const getSubscriptionStatus = (wholesalerId: number): SubscriptionStatus => {
     return subscriptionStatuses[wholesalerId] || "NONE";
-  };
-
-  const isWholesalerAllowed = (wholesalerId: number): boolean => {
-    const status = getSubscriptionStatus(wholesalerId);
-    return status === "APPROVED" || status === "PENDING";
-  };
-
-  const handleSubscribeAndOrder = () => {
-    navigate("/local-seller/wholesalers");
   };
 
   if (loading) {
@@ -343,67 +320,12 @@ export function LocalSellerProductsPage() {
                 </p>
 
                 <div className="space-y-2">
-                  {isWholesalerAllowed(product.wholesalerId || 0) ? (
-                    <>
-                      {cart.some((p) => p.id === product.id) ? (
-                        <Button
-                          onClick={() => removeFromCart(product)}
-                          type="button"
-                          size="sm"
-                          className="w-full rounded-lg bg-red-50 border border-red-200 text-red-600 hover:bg-red-100"
-                        >
-                          <Trash2 className="mr-2 h-3.5 w-3.5" />
-                          Remove from Cart
-                        </Button>
-                      ) : (
-                        <button
-                          onClick={() => addToCart(product)}
-                          disabled={product.stockQuantity === 0}
-                          className={`px-3 py-2 rounded-md text-sm font-medium ${
-                            product.stockQuantity === 0
-                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-blue-600 text-white hover:bg-blue-700"
-                          }`}
-                        >
-                          {product.stockQuantity === 0
-                            ? "Out of Stock"
-                            : "Add to Cart"}
-                        </button>
-                      )}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="w-full rounded-lg"
-                      >
-                        Place Order
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled
-                        className="w-full rounded-lg cursor-not-allowed bg-slate-100 text-slate-400"
-                      >
-                        <Lock className="mr-2 h-3.5 w-3.5" />
-                        Add to Cart (Approval Required)
-                      </Button>
-                      <Button
-                        onClick={handleSubscribeAndOrder}
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="w-full rounded-lg text-blue-600 border-blue-200 hover:bg-blue-50"
-                      >
-                        Subscribe to Wholesaler
-                      </Button>
-                      <p className="text-xs text-red-600 mt-1">
-                        Subscribe to this wholesaler to place orders
-                      </p>
-                    </>
-                  )}
+                  <button
+    onClick={() => navigate(`/local-seller/product/${product.id}`)}
+    className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+  >
+    View Details
+  </button>
                 </div>
               </article>
             );

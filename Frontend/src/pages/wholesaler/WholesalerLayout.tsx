@@ -10,6 +10,7 @@ import {
   X,
   UserCheck,
   MapPin,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -28,10 +29,8 @@ const navigation: NavItem[] = [
   { name: 'Orders', href: '/wholesaler/orders', icon: Package, available: true },
   { name: 'Salesmen', href: '/wholesaler/salesmen', icon: Users, available: true },
   { name: 'Assignments', href: '/wholesaler/assignments', icon: Users, available: true },
-  { name: 'Payments', href: '/wholesaler/payments', icon: Package, available: false },
+  { name: 'Payments', href: '/wholesaler/payments', icon: CreditCard, available: true },
   { name: 'Invoices', href: '/wholesaler/invoices', icon: Package, available: true },
-  { name: 'History', href: '/wholesaler/history', icon: Package, available: false },
-
 ]
 
 function NavLinks({

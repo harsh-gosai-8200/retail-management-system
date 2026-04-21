@@ -227,10 +227,6 @@ export function InvoicesPage() {
             <p className="mt-1 text-xl font-bold text-green-600">{stats.paid}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs text-slate-500">Overdue</p>
-            <p className="mt-1 text-xl font-bold text-red-600">{stats.overdue}</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs text-slate-500">Total Amount</p>
             <p className="mt-1 text-xl font-bold text-purple-600">₹{stats.totalAmount.toLocaleString()}</p>
           </div>

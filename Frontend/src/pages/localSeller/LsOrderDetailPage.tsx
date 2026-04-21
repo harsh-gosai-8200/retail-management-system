@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
+import {
   ArrowLeft,
   Package,
   Calendar,
@@ -19,15 +19,17 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/lsOrderService';
-import { OrderStatusBadge } from './component/order/OrderStatusBadge'; 
+import { OrderStatusBadge } from './component/order/OrderStatusBadge';
 import { OrderItemsTable } from './component/order/OrderItemsTable';
 import { Button } from '../../components/ui/button';
 import type { Order } from '../../types/lsorder';
+import { useConfirm } from '../../context/ConfirmContext';
 
 export function LsOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { confirm } = useConfirm();
   const sellerId = user?.id;
 
   const [order, setOrder] = useState<Order | null>(null);
@@ -54,8 +56,12 @@ export function LsOrderDetailPage() {
 
   const handleCancelOrder = async () => {
     if (!order) return;
-    
-    const confirmCancel = window.confirm('Are you sure you want to cancel this order? This action cannot be undone.');
+
+    const confirmCancel = await confirm(
+      "Are you sure you want to cancel this order? This action cannot be undone.",
+      "danger"
+    );
+
     if (!confirmCancel) return;
 
     setCancelling(true);

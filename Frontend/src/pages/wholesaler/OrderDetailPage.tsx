@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Package, 
-  User, 
-  MapPin, 
-  Calendar, 
+import {
+  ArrowLeft,
+  Package,
+  User,
+  MapPin,
+  Calendar,
   CreditCard,
   CheckCircle,
   XCircle,
@@ -13,14 +13,18 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
-import { OrderStatusBadge } from './components/order/OrderStatusBadge'; 
+import { OrderStatusBadge } from './components/order/OrderStatusBadge';
 import { StatusUpdateModal } from './components/order/StatusUpdateModal';
 import type { Order } from '../../types/order';
+import { useConfirm } from '../../context/ConfirmContext';
+import { usePrompt } from '../../context/PromptContext';
 
 export const OrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { prompt } = usePrompt();
+  const { confirm } = useConfirm();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +37,7 @@ export const OrderDetailPage: React.FC = () => {
 
   const fetchOrder = async () => {
     if (!id || !user?.id) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -48,9 +52,14 @@ export const OrderDetailPage: React.FC = () => {
 
   const handleApprove = async () => {
     if (!order || !user?.id) return;
-    
-    if (!window.confirm('Are you sure you want to approve this order?')) return;
-    
+
+    const ok = await confirm(
+      "Are you sure you want to approve this order?",
+      "warning"
+    );
+
+    if (!ok) return;
+
     setActionLoading(true);
     try {
       await orderService.approveOrder(user.id, order.id);
@@ -64,15 +73,15 @@ export const OrderDetailPage: React.FC = () => {
 
   const handleReject = async () => {
     if (!order || !user?.id) return;
-    
-    const reason = window.prompt('Please enter rejection reason:');
+
+    const reason = await prompt("Please enter rejection reason:");
     if (!reason) return;
-    
+
     setActionLoading(true);
     try {
-      await orderService.rejectOrder(user.id, order.id, { 
-        reason, 
-        notifySeller: true 
+      await orderService.rejectOrder(user.id, order.id, {
+        reason,
+        notifySeller: true
       });
       await fetchOrder();
     } catch (err: any) {
@@ -84,7 +93,7 @@ export const OrderDetailPage: React.FC = () => {
 
   const handleStatusUpdate = async (data: any) => {
     if (!order || !user?.id) return;
-    
+
     setActionLoading(true);
     try {
       await orderService.updateStatus(user.id, order.id, data);
@@ -158,7 +167,7 @@ export const OrderDetailPage: React.FC = () => {
               Approve Order
             </button>
           )}
-          
+
           {canReject && (
             <button
               onClick={handleReject}

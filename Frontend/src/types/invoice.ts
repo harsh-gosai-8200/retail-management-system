@@ -28,7 +28,6 @@ export interface InvoiceStats {
   total: number;
   pending: number;
   paid: number;
-  overdue: number;
   totalAmount: number;
 }
 

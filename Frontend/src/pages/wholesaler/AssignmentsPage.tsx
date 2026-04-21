@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { salesmanService } from '../../services/salesmanService';
-import { AssignmentsTable } from './components/salesman/AssignmentsTable'; 
+import { AssignmentsTable } from './components/salesman/AssignmentsTable';
 import { Loader2, AlertCircle } from 'lucide-react';
 import type { SalesmanAssignment } from '../../types/wholesalerSalesman';
+import { useConfirm } from '../../context/ConfirmContext';
 
 export function AssignmentsPage() {
   const { user } = useAuth();
+  const { confirm } = useConfirm();
   const [assignments, setAssignments] = useState<SalesmanAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,8 +28,13 @@ export function AssignmentsPage() {
   };
 
   const handleRemove = async (assignmentId: number) => {
-    if (!window.confirm('Are you sure you want to remove this assignment?')) return;
-    
+    const ok = await confirm(
+      "Are you sure you want to remove this assignment?",
+      "danger"
+    );
+
+    if (!ok) return;
+
     try {
       await salesmanService.removeAssignment(user?.id!, assignmentId);
       await loadAssignments(); // Refresh list
@@ -69,12 +76,12 @@ export function AssignmentsPage() {
           Total: {assignments.length} assignments
         </p>
       </div>
-      
-      <AssignmentsTable 
-        assignments={assignments} 
-        onRemove={handleRemove} 
+
+      <AssignmentsTable
+        assignments={assignments}
+        onRemove={handleRemove}
       />
-      
+
       {assignments.length === 0 && (
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-8 text-center">
           <p className="text-slate-500">No assignments found</p>

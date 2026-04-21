@@ -116,8 +116,23 @@ import { CheckoutPage } from './pages/localSeller/CheckoutPage.tsx'
 import { WholesalerInvoiceDetailPage } from './pages/wholesaler/InvoiceDetailPage.tsx'
 import { WholesalerInvoicesPage } from './pages/wholesaler/InvoicesPage.tsx'
 import { WholesalerProfilePage } from './pages/wholesaler/WholesalerProfilePage.tsx'
-import {LocalSellerProfilePage } from './pages/localSeller/LocalSellerProfilePage.tsx'
+import { LocalSellerProfilePage } from './pages/localSeller/LocalSellerProfilePage.tsx'
 import { ServiceCitiesPage } from './pages/wholesaler/ServiceCitiesPage.tsx'
+import { PaymentHistoryPage } from './pages/localSeller/PaymentHistoryPage.tsx'
+import { ProductDetailPage } from './pages/localSeller/ProductDetailPage.tsx'
+import { WholesalerPaymentsPage } from './pages/wholesaler/PaymentsPage.tsx'
+import { AdminUserDetailPage } from './pages/admin/UserDetailPage.tsx'
+import { AdminUsersPage } from './pages/admin/UsersPage.tsx'
+import { AdminDashboard } from './pages/admin/Dashboard.tsx'
+import { AdminLayout } from './pages/admin/AdminLayout.tsx'
+import { AdminPaymentsPage } from './pages/admin/PaymentsPage.tsx'
+import { AdminLogsPage } from './pages/admin/LogsPage.tsx'
+import { AdminReportsPage } from './pages/admin/ReportsPage.tsx'
+import { AdminPaymentDetailPage } from './pages/admin/PaymentDetailPage.tsx'
+import { AdminSalesmanCollectionsPage } from './pages/admin/AdminSalesmanCollectionsPage.tsx'
+import { SalesmanCollectionDetailPage } from './pages/admin/SalesmanCollectionDetailPage.tsx'
+import { AdminOrderDetailPage } from './pages/admin/OrderDetailPage.tsx'
+import { AdminOrdersPage } from './pages/admin/OrdersPage.tsx'
 
 function App() {
   const { user, isLoading } = useAuth();
@@ -139,6 +154,22 @@ function App() {
       <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
 
+      <Route element={<RoleBasedRoute allowedRoles={['ADMIN']} />}>
+        <Route path="admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="users/:userId" element={<AdminUserDetailPage />} />
+          <Route path="payments" element={<AdminPaymentsPage />} />
+          <Route path="payments/:paymentId" element={<AdminPaymentDetailPage />} />
+          <Route path="logs" element={<AdminLogsPage />} />
+          <Route path="reports" element={<AdminReportsPage />} />
+          <Route path="salesman-collections/:salesmanId" element={<AdminSalesmanCollectionsPage />} />
+          <Route path="salesman-collections/:salesmanId/order/:orderId" element={<SalesmanCollectionDetailPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+<Route path="orders/:orderId" element={<AdminOrderDetailPage />} />
+        </Route>
+      </Route>
+
       {/* Wholesaler Panel */}
       <Route path="/wholesaler" element={<WholesalerLayout />}>
         <Route index element={<WholesalerDashboard />} />
@@ -154,8 +185,9 @@ function App() {
         <Route path="salesmen/:id/assign" element={<AssignSellersPage />} />
         <Route path="assignments" element={<AssignmentsPage />} />
         <Route path="invoices" element={<WholesalerInvoicesPage />} />
+        <Route path="payments" element={<WholesalerPaymentsPage />} />
         <Route path="invoices/:orderId" element={<WholesalerInvoiceDetailPage />} />
-       <Route path="profile" element={<WholesalerProfilePage />} />
+        <Route path="profile" element={<WholesalerProfilePage />} />
       </Route>
 
       {/* Salesman Routes - Only SALESMAN can access */}
@@ -182,8 +214,9 @@ function App() {
         <Route path="invoices" element={<InvoicesPage />} />
         <Route path="invoices/:orderId" element={<InvoiceDetailPage />} />
         <Route path="products" element={<LocalSellerProductsPage />} />
-        <Route path="/local-seller/profile" element={<LocalSellerProfilePage />}
-/>
+        <Route path="payments" element={<PaymentHistoryPage />} />
+        <Route path="product/:productId" element={<ProductDetailPage />} />
+        <Route path="/local-seller/profile" element={<LocalSellerProfilePage />} />
       </Route>
 
       {/* Fallback */}
@@ -192,7 +225,8 @@ function App() {
           user.role === 'WHOLESALER' ? <Navigate to="/wholesaler" replace /> :
             user.role === 'SALESMAN' ? <Navigate to="/salesman" replace /> :
               user.role === 'LOCAL_SELLER' ? <Navigate to="/local-seller" replace /> :
-                <Navigate to="/auth/login" replace />
+                user.role === 'ADMIN' ? <Navigate to="/admin" replace /> :
+                  <Navigate to="/auth/login" replace />
         ) : (
           <Navigate to="auth/login" replace />
         )

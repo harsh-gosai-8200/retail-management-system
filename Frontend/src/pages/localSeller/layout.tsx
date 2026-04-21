@@ -28,8 +28,7 @@ const navigation: NavItem[] = [
   { name: "Cart", href: "/local-seller/cart", icon: ShoppingCart, available: true },
   { name: "Orders", href: "/local-seller/orders", icon: Package, available: true },
   { name: "Invoices", href: "/local-seller/invoices", icon: FileText, available: true },
-  { name: "Payments", href: "/local-seller/payments", icon: CreditCard, available: false },
-  { name: "History", href: "/local-seller/history", icon: Package, available: false },
+  { name: "Payments", href: "/local-seller/payments", icon: CreditCard, available: true },
 ];
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {

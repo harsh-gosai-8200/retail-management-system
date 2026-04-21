@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Download, 
-  FileText, 
-  Calendar, 
+import {
+  ArrowLeft,
+  Download,
+  FileText,
+  Calendar,
   IndianRupee,
   Truck,
   Store,
@@ -22,6 +22,7 @@ import { api } from '../../services/api';
 import { Button } from '../../components/ui/button';
 import type { Invoice } from '../../types/invoice';
 import { invoiceService } from '../../services/invoiceService';
+import { useToast } from '../../context/ToastContext';
 
 const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
   GENERATED: { color: 'text-blue-800', bg: 'bg-blue-100', label: 'Generated' },
@@ -43,6 +44,7 @@ export function WholesalerInvoiceDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,9 +91,15 @@ export function WholesalerInvoiceDetailPage() {
     setResending(true);
     try {
       await invoiceService.resendInvoice(invoice.orderId);
-      alert(`Invoice email resent to seller for order #${invoice.orderNumber}`);
+      showToast(
+        `Invoice email resent for order #${invoice.orderNumber}`,
+        "success"
+      );
     } catch (err: any) {
-      alert(err.message || 'Failed to resend invoice email');
+      showToast(
+        err.message || "Failed to resend invoice email",
+        "error"
+      );
     } finally {
       setResending(false);
     }

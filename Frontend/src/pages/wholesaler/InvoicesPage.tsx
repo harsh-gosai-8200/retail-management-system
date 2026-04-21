@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
   FileText,
   Loader2,
   AlertCircle,
@@ -16,8 +16,10 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { Button } from '../../components/ui/button';
-import type { Invoice } from '../../types/invoice';
+import type { Invoice, InvoiceFilters as Filters, InvoiceStats } from '../../types/invoice';
 import { invoiceService } from '../../services/invoiceService';
+import { useToast } from '../../context/ToastContext';
+import { InvoiceFilters } from '../localSeller/component/InvoiceFilters';
 
 const PAGE_SIZE = 10;
 
@@ -25,7 +27,6 @@ const statusConfig: Record<string, { color: string; bg: string; label: string }>
   GENERATED: { color: 'text-blue-800', bg: 'bg-blue-100', label: 'Generated' },
   PENDING: { color: 'text-yellow-800', bg: 'bg-yellow-100', label: 'Pending' },
   PAID: { color: 'text-green-800', bg: 'bg-green-100', label: 'Paid' },
-  OVERDUE: { color: 'text-red-800', bg: 'bg-red-100', label: 'Overdue' },
 };
 
 function InvoiceStatusBadge({ status }: { status: string }) {
@@ -40,47 +41,75 @@ function InvoiceStatusBadge({ status }: { status: string }) {
 export function WholesalerInvoicesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const wholesalerId = user?.id;
 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [stats, setStats] = useState<InvoiceStats | null>(null);
   const [resendingId, setResendingId] = useState<number | null>(null);
-  
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
+
+  const [filters, setFilters] = useState<Filters>({
+    page: 0,
+    size: PAGE_SIZE,
+    sortBy: 'generatedAt',
+    sortDir: 'desc',
+    status: '',
+    search: '',
+    startDate: '',
+    endDate: '',
+    minAmount: undefined,
+    maxAmount: undefined,
+  });
 
   useEffect(() => {
     if (wholesalerId) {
       loadInvoices();
+      loadStats();
     }
-  }, [wholesalerId, statusFilter, page]);
+  }, [wholesalerId, filters]);
 
   const loadInvoices = async () => {
     setLoading(true);
     try {
-      // Endpoint to get all invoices for wholesaler
-      const response = await api.request<any>('/invoices/wholesaler', {
-        params: {
-          wholesalerId,
-          status: statusFilter || undefined,
-          page,
-          size: PAGE_SIZE,
-          sort: 'generatedAt,desc'
-        }
-      });
+      const response = await invoiceService.getWholesalerInvoices(
+        wholesalerId!,
+        filters.page,
+        filters.size,
+        `${filters.sortBy},${filters.sortDir}`,
+        filters.status || undefined,
+        filters.search || undefined,
+        filters.startDate || undefined,
+        filters.endDate || undefined,
+        filters.minAmount,
+        filters.maxAmount
+      );
       
       setInvoices(response.content || []);
-      setTotalPages(response.totalPages || 0);
-      setTotalElements(response.totalElements || 0);
     } catch (err: any) {
       setError(err.message);
       setInvoices([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadStats = async () => {
+    try {
+      const data = await invoiceService.getWholesalerInvoiceStats(wholesalerId!);
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to load stats:', err);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setFilters(prev => ({ ...prev, page }));
+  };
+
+  const handleFilterChange = (newFilters: Partial<Filters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters, page: 0 }));
   };
 
   const handleDownload = async (invoice: Invoice, e: React.MouseEvent) => {
@@ -105,28 +134,36 @@ export function WholesalerInvoicesPage() {
     setResendingId(invoice.id);
     try {
       await invoiceService.resendInvoice(invoice.orderId);
-      alert(`Invoice email resent to seller for order #${invoice.orderNumber}`);
+      showToast(
+        `Invoice email resent to seller for order #${invoice.orderNumber}`,
+        "success"
+      );
     } catch (error: any) {
-      alert(error.message || 'Failed to resend invoice email');
+      showToast(
+        error.message || "Failed to resend invoice email",
+        "error"
+      );
     } finally {
       setResendingId(null);
     }
   };
 
-  const handleFilterChange = (filterValue: string) => {
-    setPage(0);
-    setStatusFilter(filterValue);
+  const handleClearFilters = () => {
+    setFilters({
+      page: 0,
+      size: PAGE_SIZE,
+      sortBy: 'generatedAt',
+      sortDir: 'desc',
+      status: '',
+      search: '',
+      startDate: '',
+      endDate: '',
+      minAmount: undefined,
+      maxAmount: undefined,
+    });
   };
 
-  const pageNumber = page + 1;
-
-  const filters = [
-    { value: '', label: 'All' },
-    { value: 'GENERATED', label: 'Generated' },
-    { value: 'PENDING', label: 'Pending' },
-    { value: 'PAID', label: 'Paid' },
-    { value: 'OVERDUE', label: 'Overdue' },
-  ];
+  const pageNumber = filters.page + 1;
 
   if (loading && invoices.length === 0) {
     return (
@@ -160,52 +197,32 @@ export function WholesalerInvoicesPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs text-slate-500">Total Invoices</p>
-          <p className="mt-1 text-xl font-bold text-slate-900">{totalElements}</p>
+          <p className="mt-1 text-xl font-bold text-slate-900">{stats?.total}</p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs text-slate-500">Pending</p>
-          <p className="mt-1 text-xl font-bold text-yellow-600">
-            {invoices.filter(i => i.status === 'PENDING').length}
+          <p className="mt-1 text-xl font-bold text-yellow-900">
+            {stats?.pending}
           </p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs text-slate-500">Paid</p>
           <p className="mt-1 text-xl font-bold text-green-600">
-            {invoices.filter(i => i.status === 'PAID').length}
+            {stats?.paid}
           </p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs text-slate-500">Overdue</p>
-          <p className="mt-1 text-xl font-bold text-red-600">
-            {invoices.filter(i => i.status === 'OVERDUE').length}
-          </p>
-        </div>
+            <p className="text-xs text-slate-500">Total Amount</p>
+            <p className="mt-1 text-xl font-bold text-purple-600">₹{stats?.totalAmount.toLocaleString()}</p>
+          </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {filters.map((filter) => (
-          <button
-            key={filter.value}
-            onClick={() => handleFilterChange(filter.value)}
-            className={`rounded-md px-3 py-1 text-sm transition-colors ${
-              statusFilter === filter.value
-                ? filter.value === 'PENDING'
-                  ? 'bg-yellow-600 text-white'
-                  : filter.value === 'PAID'
-                  ? 'bg-green-600 text-white'
-                  : filter.value === 'OVERDUE'
-                  ? 'bg-red-600 text-white'
-                  : filter.value === 'GENERATED'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-blue-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
+      <InvoiceFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onClearFilters={handleClearFilters}
+      />
 
       {/* Invoices List */}
       {invoices.length === 0 ? (
@@ -213,7 +230,9 @@ export function WholesalerInvoicesPage() {
           <FileText className="mx-auto h-12 w-12 text-slate-400" />
           <h3 className="mt-4 text-lg font-semibold text-slate-900">No invoices found</h3>
           <p className="mt-2 text-sm text-slate-500">
-            {statusFilter ? 'No invoices match the selected filter' : 'Invoices will appear here once orders are delivered'}
+            {filters.status || filters.search || filters.startDate || filters.minAmount
+              ? 'Try adjusting your filters'
+              : 'Invoices will appear here once orders are delivered'}
           </p>
         </div>
       ) : (
@@ -284,19 +303,19 @@ export function WholesalerInvoicesPage() {
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {invoices.length > 0 && (
         <footer className="flex items-center justify-between text-xs text-slate-500">
           <p>
             Page <span className="font-semibold text-slate-900">{pageNumber}</span> of{' '}
-            <span className="font-semibold text-slate-900">{totalPages}</span> ·{' '}
-            <span className="font-semibold text-slate-900">{totalElements}</span> total invoices
+            <span className="font-semibold text-slate-900">{Math.ceil((stats?.total || 0) / filters.size)}</span> ·{' '}
+            <span className="font-semibold text-slate-900">{stats?.total || 0}</span> total invoices
           </p>
           <div className="flex gap-2">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
+              onClick={() => handlePageChange(filters.page - 1)}
+              disabled={filters.page === 0}
               className="rounded-xl"
             >
               Previous
@@ -304,8 +323,8 @@ export function WholesalerInvoicesPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
+              onClick={() => handlePageChange(filters.page + 1)}
+              disabled={filters.page >= Math.ceil((stats?.total || 0) / filters.size) - 1}
               className="rounded-xl"
             >
               Next

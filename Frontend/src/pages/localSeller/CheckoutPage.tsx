@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
+import {
   ArrowLeft,
   Package,
   Store,
@@ -16,8 +16,10 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { cartService } from '../../services/cartService';
 import { orderService } from '../../services/lsOrderService';
+import { sellerService } from '../../services/sellerService';
 import { Button } from '../../components/ui/button';
 import type { CartSummary } from '../../types/cart';
+import { paymentService } from '../../services/paymentService';
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -30,16 +32,27 @@ export function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
 
   // Form state
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [upiId, setUpiId] = useState('');
+  const [placedOrder, setPlacedOrder] = useState<any>(null);
 
+  // Load cart on mount
   useEffect(() => {
     loadCart();
+    loadProfile();
   }, []);
+
+  // Pre-fill delivery address when profile loads
+  useEffect(() => {
+    if (profile?.address) {
+      setDeliveryAddress(profile.address);
+    }
+  }, [profile]);
 
   const loadCart = async () => {
     try {
@@ -47,13 +60,74 @@ export function CheckoutPage() {
       setLoading(true);
       const data = await cartService.getCart(sellerId!);
       setCart(data);
-      
-      // Pre-fill delivery address if available from seller profile
-      // You can fetch seller profile here
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadProfile = async () => {
+    try {
+      const data = await sellerService.getProfile();
+      setProfile(data);
+    } catch (err: any) {
+      console.error('Failed to load profile:', err);
+    }
+  };
+
+  const initiateRazorpayPayment = async (order: any) => {
+    try {
+      const razorpayOrder = await paymentService.createOrder({
+        orderId: order.id,
+        amount: cart!.totalAmount,
+      });
+
+      const options = {
+        key: razorpayOrder.razorpayKeyId,
+        amount: razorpayOrder.amount * 100,
+        currency: razorpayOrder.currency,
+        name: 'Retail Management System',
+        description: `Order #${razorpayOrder.orderNumber}`,
+        order_id: razorpayOrder.razorpayOrderId,
+        handler: async (response: any) => {
+          const verification = await paymentService.verifyPayment({
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+            orderId: razorpayOrder.orderId,
+          });
+
+          if (verification.success) {
+            setSuccess(verification.message || 'Payment successful! Order confirmed.');
+            setTimeout(() => {
+              navigate(`/local-seller/orders/${razorpayOrder.orderId}`);
+            }, 2000);
+          } else {
+            setError(verification.message || 'Payment verification failed');
+            setSubmitting(false);
+          }
+        },
+        prefill: {
+          name: user?.username || '',
+          email: user?.email || '',
+        },
+        theme: {
+          color: '#3b82f6',
+        },
+        modal: {
+          ondismiss: () => {
+            setSubmitting(false);
+            setError('Payment cancelled');
+          },
+        },
+      };
+
+      const razorpay = new (window as any).Razorpay(options);
+      razorpay.open();
+
+    } catch (err: any) {
+      throw new Error(err.message || 'Failed to initiate payment');
     }
   };
 
@@ -72,7 +146,6 @@ export function CheckoutPage() {
     setError(null);
 
     try {
-      // Group items by wholesaler (should be one per checkout)
       const wholesalerId = cart.items[0]?.wholesalerId;
       const items = cart.items.map(item => ({
         productId: item.productId,
@@ -89,19 +162,21 @@ export function CheckoutPage() {
         upiId: paymentMethod === 'UPI' ? upiId : undefined,
       };
 
-      
       const response = await orderService.placeOrder(orderData);
-      
-      setSuccess('Order placed successfully!');
-      
-      setTimeout(() => {
-        navigate(`/local-seller/orders/${response.id}`);
-      }, 2000);
-      
+      setPlacedOrder(response);
+
+      if (paymentMethod === 'CASH') {
+        setSuccess('Order placed successfully! You can pay on delivery.');
+        setTimeout(() => {
+          navigate(`/local-seller/orders/${response.id}`);
+        }, 2000);
+      } else if (paymentMethod === 'UPI') {
+        await initiateRazorpayPayment(response);
+      }
+
     } catch (err: any) {
       console.error('Order failed:', err);
       setError(err.message || 'Failed to place order. Please try again.');
-    } finally {
       setSubmitting(false);
     }
   };
@@ -142,9 +217,7 @@ export function CheckoutPage() {
     );
   }
 
-  // Group items by wholesaler
   const wholesalerName = cart.items[0]?.wholesalerName;
-  const wholesalerId = cart.items[0]?.wholesalerId;
 
   return (
     <div className="space-y-6">
@@ -189,7 +262,7 @@ export function CheckoutPage() {
               <Store className="h-5 w-5 text-blue-600" />
               <h2 className="font-semibold text-slate-900">Order from {wholesalerName}</h2>
             </div>
-            
+
             <div className="space-y-3">
               {cart.items.map((item) => (
                 <div key={item.id} className="flex items-center justify-between py-2 border-b last:border-0">
@@ -223,6 +296,11 @@ export function CheckoutPage() {
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   required
                 />
+                {profile?.address && (
+                  <p className="mt-1 text-xs text-slate-400">
+                    Pre-filled from your profile address
+                  </p>
+                )}
               </div>
 
               <div>
@@ -280,7 +358,7 @@ export function CheckoutPage() {
                 </div>
               </label>
 
-              {paymentMethod === 'UPI' && (
+              {/* {paymentMethod === 'UPI' && (
                 <div className="ml-8 mt-2">
                   <input
                     type="text"
@@ -289,8 +367,11 @@ export function CheckoutPage() {
                     placeholder="Enter UPI ID (e.g., username@okhdfcbank)"
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
+                  <p className="mt-1 text-xs text-slate-400">
+                    You'll be redirected to Razorpay for payment
+                  </p>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         </div>
@@ -299,7 +380,7 @@ export function CheckoutPage() {
         <div className="md:col-span-1">
           <div className="sticky top-6 rounded-lg border border-slate-200 bg-white p-6">
             <h2 className="font-semibold text-slate-900 mb-4">Order Summary</h2>
-            
+
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600">Subtotal</span>
@@ -329,7 +410,7 @@ export function CheckoutPage() {
                     Placing Order...
                   </>
                 ) : (
-                  'Place Order'
+                  paymentMethod === 'CASH' ? 'Place Order (Cash on Delivery)' : 'Pay & Place Order'
                 )}
               </Button>
             </div>
